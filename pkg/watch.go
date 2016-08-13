@@ -7,25 +7,26 @@ import (
 	"log"
 	"net/rpc"
 	"net"
-	"fmt"
 	"net/http"
+	"github.com/spf13/cobra"
 )
 
 type Filter struct {
 	NamePrefix string
 }
 
-func RunWatch(ro *RootOptions) {
+func RunWatch(cmd *cobra.Command) {
+	bind := GetBind(cmd)
 	c := Cache {}
 	rpc.Register(&c)
 	rpc.HandleHTTP()
 
-	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", ro.Address, ro.Port))
+	l, err := net.Listen("tcp", bind)
 	if err != nil {
-		log.Fatalf("Kube Mirror failed to start: %v", err)
+		log.Fatalf("Kube Mirror failed to start on %s: %v", bind, err)
 	}
 	go http.Serve(l, nil)
-	log.Printf("Kube Mirror started on %s:%v\n", ro.Address, ro.Port)
+	log.Printf("Kube Mirror started on %s\n", bind)
 	waitForSigterm()
 	log.Println("Kube Mirror stopped")
 }

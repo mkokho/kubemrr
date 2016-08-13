@@ -3,11 +3,12 @@ package pkg
 import (
 	"net/rpc"
 	"io"
-	"fmt"
+	"github.com/spf13/cobra"
 )
 
-func RunGet(ro *RootOptions, out io.Writer) (err error) {
-	client, err := rpc.DialHTTP("tcp", fmt.Sprintf("%s:%d", ro.Address, ro.Port))
+func RunGet(cmd *cobra.Command, out io.Writer) (err error) {
+	bind := GetBind(cmd)
+	client, err := rpc.DialHTTP("tcp", bind)
 	if err != nil {
 		return
 	}

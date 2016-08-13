@@ -27,8 +27,7 @@ var getCmd = &cobra.Command{
 	Short: "Display mirrored resources",
 	Long: `Display mirrored resources`,
 	Run: func(cmd *cobra.Command, args []string) {
-		ro := pkg.MustRootOptions(cmd)
-		err := pkg.RunGet(ro, os.Stdout)
+		err := pkg.RunGet(cmd, os.Stdout)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -37,6 +36,7 @@ var getCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(getCmd)
+	pkg.AddCommonFlags(getCmd)
 
 	// Here you will define your flags and configuration settings.
 

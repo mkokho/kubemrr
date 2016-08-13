@@ -10,11 +10,11 @@ var watchCmd = &cobra.Command{
 	Use:   "watch",
 	Short: "Watch one or several Kubernetes API servers",
 	Run: func(cmd *cobra.Command, args []string) {
-		ro := pkg.MustRootOptions(cmd)
-		pkg.RunWatch(ro)
+		pkg.RunWatch(cmd)
 	},
 }
 
 func init() {
 	RootCmd.AddCommand(watchCmd)
+	pkg.AddCommonFlags(watchCmd)
 }
