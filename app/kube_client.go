@@ -1,16 +1,16 @@
-package pkg
+package app
 
 import (
-	"net/url"
-	"net/http"
 	"bytes"
 	"encoding/json"
 	"io"
 	"io/ioutil"
+	"net/http"
+	"net/url"
 )
 
 type KubeClient struct {
-	client   *http.Client
+	client  *http.Client
 	BaseURL *url.URL
 }
 
@@ -99,4 +99,3 @@ func (c *KubeClient) Do(req *http.Request, v interface{}) error {
 
 	return err
 }
-

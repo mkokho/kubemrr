@@ -1,19 +1,18 @@
-package pkg
+package app
 
 import (
-	"testing"
-	"net/http/httptest"
-	"net/http"
-	"net/url"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"reflect"
+	"testing"
 )
 
 var (
-	mux *http.ServeMux
+	mux    *http.ServeMux
 	server *httptest.Server
 	client *KubeClient
-
 )
 
 func setup() {
@@ -43,7 +42,7 @@ func TestFetchPods(t *testing.T) {
 					{ "metadata": { "name": "pod2" } }
 				]
 			}`)
-		},
+	},
 	)
 
 	pods, err := client.getPods()
@@ -52,8 +51,8 @@ func TestFetchPods(t *testing.T) {
 	}
 
 	want := []Pod{
-		Pod { ObjectMeta: ObjectMeta{Name: "pod1"} },
-		Pod { ObjectMeta: ObjectMeta{Name: "pod2"} },
+		Pod{ObjectMeta: ObjectMeta{Name: "pod1"}},
+		Pod{ObjectMeta: ObjectMeta{Name: "pod2"}},
 	}
 
 	if !reflect.DeepEqual(pods, want) {
@@ -73,7 +72,7 @@ func TestFetchServices(t *testing.T) {
 					{ "metadata": { "name": "svc2" } }
 				]
 			}`)
-		},
+	},
 	)
 
 	svc, err := client.getServices()
@@ -82,8 +81,8 @@ func TestFetchServices(t *testing.T) {
 	}
 
 	want := []Service{
-		Service { ObjectMeta: ObjectMeta{Name: "svc1"} },
-		Service { ObjectMeta: ObjectMeta{Name: "svc2"} },
+		Service{ObjectMeta: ObjectMeta{Name: "svc1"}},
+		Service{ObjectMeta: ObjectMeta{Name: "svc2"}},
 	}
 
 	if !reflect.DeepEqual(svc, want) {

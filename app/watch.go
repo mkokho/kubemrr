@@ -1,23 +1,37 @@
-package pkg
+package app
 
 import (
-	"os/signal"
-	"os"
-	"syscall"
+	"github.com/spf13/cobra"
 	"log"
-	"net/rpc"
 	"net"
 	"net/http"
-	"github.com/spf13/cobra"
+	"net/rpc"
+	"os"
+	"os/signal"
+	"syscall"
 )
+
+func NewWatchCommand() *cobra.Command {
+	var watchCmd = &cobra.Command{
+		Use:   "watch",
+		Short: "Starts a mirror of one or several Kubernetes API servers",
+		Long:  "Starts a mirror of one or several Kubernetes API servers",
+		Run: func(cmd *cobra.Command, args []string) {
+			RunWatch(cmd, args)
+		},
+	}
+
+	AddCommonFlags(watchCmd)
+	return watchCmd
+}
 
 type Filter struct {
 	NamePrefix string
 }
 
-func RunWatch(cmd *cobra.Command) {
+func RunWatch(cmd *cobra.Command, args []string) {
 	bind := GetBind(cmd)
-	c := Cache {}
+	c := Cache{}
 	rpc.Register(&c)
 	rpc.HandleHTTP()
 
@@ -35,8 +49,8 @@ func waitForSigterm() {
 	term := make(chan os.Signal)
 	signal.Notify(term, os.Interrupt, syscall.SIGTERM)
 	select {
-		case <-term:
-			log.Println("Received SIGTERM, exiting gracefully...")
+	case <-term:
+		log.Println("Received SIGTERM, exiting gracefully...")
 	}
 }
 

@@ -1,4 +1,4 @@
-// Copyright © 2016 NAME HERE <EMAIL ADDRESS>
+// Copyright © 2016 Mikhail Kokho <m.kokho@gmail.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,10 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package app
 
-import "github.com/mkokho/kubemrr/cmd"
+import (
+	"fmt"
+	"github.com/mkokho/kubemrr/app"
+	"github.com/spf13/cobra"
+	"os"
+)
 
-func main() {
-	cmd.Execute()
+var RootCmd = &cobra.Command{
+	Use:   "kubemrr",
+	Short: "kubemrr mirrors description of Kubernetes resources",
+}
+
+func init() {
+	RootCmd.AddCommand(app.NewGetCommand())
+	RootCmd.AddCommand(app.NewWatchCommand())
+}
+
+func _() {
+	if err := RootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
 }

@@ -1,23 +1,23 @@
-package pkg
+package app
 
 import (
-	"testing"
-	"reflect"
 	"encoding/json"
+	"reflect"
+	"testing"
 )
 
 func TestGetPods(t *testing.T) {
 	var p Pod
 	json.Unmarshal([]byte(mockPod), &p)
 
-	c := Cache {}
+	c := Cache{}
 
 	tests := []struct {
-    actual []Pod
-    expected []Pod
-  }{
+		actual   []Pod
+		expected []Pod
+	}{
 		{
-			actual: c.getPods(),
+			actual:   c.getPods(),
 			expected: []Pod{p},
 		},
 	}

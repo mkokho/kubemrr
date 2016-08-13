@@ -1,9 +1,9 @@
-package pkg
+package app
 
 import (
+	"fmt"
 	"github.com/spf13/cobra"
 	"log"
-	"fmt"
 )
 
 func AddCommonFlags(cmd *cobra.Command) {

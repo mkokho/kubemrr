@@ -1,4 +1,4 @@
-package pkg
+package app
 
 import (
 	"encoding/json"
@@ -6,11 +6,10 @@ import (
 )
 
 type Cache struct {
-
 }
 
 const (
-  mockPod string = `
+	mockPod string = `
 {
 	"apiVersion": "v1",
 	"kind": "Pod",
@@ -36,4 +35,3 @@ func (c *Cache) getPods() []Pod {
 	}
 	return []Pod{p}
 }
-
