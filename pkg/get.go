@@ -3,10 +3,11 @@ package pkg
 import (
 	"net/rpc"
 	"io"
+	"fmt"
 )
 
-func RunGet(out io.Writer) (err error) {
-	client, err := rpc.DialHTTP("tcp", "localhost:14088")
+func RunGet(ro *RootOptions, out io.Writer) (err error) {
+	client, err := rpc.DialHTTP("tcp", fmt.Sprintf("%s:%d", ro.Address, ro.Port))
 	if err != nil {
 		return
 	}

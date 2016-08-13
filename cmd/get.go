@@ -16,9 +16,9 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/mkokho/kubemrr/pkg"
 	"os"
 	"log"
+	"github.com/mkokho/kubemrr/pkg"
 )
 
 // completeCmd represents the complete command
@@ -27,11 +27,11 @@ var getCmd = &cobra.Command{
 	Short: "Display mirrored resources",
 	Long: `Display mirrored resources`,
 	Run: func(cmd *cobra.Command, args []string) {
-		err := pkg.RunGet(os.Stdout)
+		ro := pkg.MustRootOptions(cmd)
+		err := pkg.RunGet(ro, os.Stdout)
 		if err != nil {
 			log.Fatal(err)
 		}
-		os.Exit(0)
 	},
 }
 

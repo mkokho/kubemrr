@@ -22,7 +22,8 @@ func Execute() {
 }
 
 func init() {
-
+	RootCmd.PersistentFlags().StringP("address", "a", "127.0.0.1", "The IP address where mirror accessible")
+	RootCmd.PersistentFlags().IntP("port", "p", 33033, "The port on mirror is accessible")
 }
 
 
