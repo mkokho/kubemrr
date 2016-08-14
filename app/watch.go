@@ -6,6 +6,18 @@ import (
 	"net"
 	"net/http"
 	"net/rpc"
+	"sync"
+)
+
+type (
+	Filter struct {
+		NamePrefix string
+	}
+
+	Cache struct {
+		pods []Pod
+		mu   *sync.RWMutex
+	}
 )
 
 func NewWatchCommand() *cobra.Command {
@@ -20,10 +32,6 @@ func NewWatchCommand() *cobra.Command {
 
 	AddCommonFlags(watchCmd)
 	return watchCmd
-}
-
-type Filter struct {
-	NamePrefix string
 }
 
 func RunWatch(cmd *cobra.Command, args []string) {
@@ -44,15 +52,21 @@ func RunWatch(cmd *cobra.Command, args []string) {
 }
 
 func Serve(l net.Listener, cache *Cache) error {
-	c := cache
-	rpc.Register(&c)
+	rpc.Register(cache)
 	rpc.HandleHTTP()
 	return http.Serve(l, nil)
 }
 
-func (c *Cache) Pods(f *Filter, pods *[]Pod) error {
-	log.Printf("Received request for pods")
-	*pods = c.getPods()
+func NewCache() *Cache {
+	return &Cache{
+		mu: &sync.RWMutex{},
+	}
+}
 
+func (c *Cache) Pods(f *Filter, pods *[]Pod) error {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	*pods = c.pods
 	return nil
 }
