@@ -90,7 +90,7 @@ func loopUpdate(c *Cache, kc *KubeClient) {
 	}
 
 	if pods != nil {
-		log.Printf("Receive %d pods from %v", len(pods), kc.BaseURL)
+		log.Printf("Received %d pods from %v", len(pods), kc.BaseURL)
 		c.setPods(pods)
 	}
 	time.Sleep(time.Millisecond * 500)
