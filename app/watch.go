@@ -1,12 +1,15 @@
 package app
 
 import (
+	"fmt"
 	"github.com/spf13/cobra"
 	"log"
 	"net"
 	"net/http"
 	"net/rpc"
+	"net/url"
 	"sync"
+	"time"
 )
 
 type (
@@ -42,8 +45,18 @@ func RunWatch(cmd *cobra.Command, args []string) {
 		log.Fatalf("Kube Mirror failed to bind on %s: %v", bind, err)
 	}
 
+	url, err := parseArgs(args)
+	if err != nil {
+		log.Fatalf("Invalid arguments: %v", err)
+	}
+
 	log.Printf("Kube Mirror is listening on %s\n", bind)
-	err = Serve(l, &Cache{})
+
+	c := NewCache()
+	kc := NewKubeClient()
+	kc.BaseURL = url
+	loopUpdate(c, kc)
+	err = Serve(l, c)
 	if err != nil {
 		log.Fatalf("Kube Mirror encounered unexpected error: %v", err)
 	}
@@ -51,10 +64,40 @@ func RunWatch(cmd *cobra.Command, args []string) {
 	log.Println("Kube Mirror has stopped")
 }
 
+func parseArgs(args []string) (*url.URL, error) {
+	if len(args) != 1 {
+		return nil, fmt.Errorf("Expected exactly one url as an argument")
+	}
+
+	url, err := url.Parse(args[0])
+	if err != nil {
+		return nil, fmt.Errorf("Could not parse %s: %s", args[0], err)
+	}
+
+	return url, nil
+}
+
 func Serve(l net.Listener, cache *Cache) error {
 	rpc.Register(cache)
 	rpc.HandleHTTP()
 	return http.Serve(l, nil)
+}
+
+func loopUpdate(c *Cache, kc *KubeClient) {
+	ticker := time.NewTicker(time.Millisecond * 500)
+	go func() {
+		for _ = range ticker.C {
+			pods, err := kc.getPods()
+			if err != nil {
+				log.Printf("Could not get pods from %v: %v", kc.BaseURL, err)
+			}
+
+			if pods != nil {
+				log.Printf("Receive %d pods from %v", len(pods), kc.BaseURL)
+				c.setPods(pods)
+			}
+		}
+	}()
 }
 
 func NewCache() *Cache {
@@ -69,4 +112,10 @@ func (c *Cache) Pods(f *Filter, pods *[]Pod) error {
 
 	*pods = c.pods
 	return nil
+}
+
+func (c *Cache) setPods(pods []Pod) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.pods = pods
 }

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package app
+package main
 
 import (
 	"fmt"
@@ -31,7 +31,7 @@ func init() {
 	RootCmd.AddCommand(app.NewWatchCommand())
 }
 
-func _() {
+func main() {
 	if err := RootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
