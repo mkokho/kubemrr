@@ -55,7 +55,7 @@ func RunWatch(cmd *cobra.Command, args []string) {
 	c := NewCache()
 	kc := NewKubeClient()
 	kc.BaseURL = url
-	loopUpdate(c, kc)
+	go loopUpdate(c, kc)
 	err = Serve(l, c)
 	if err != nil {
 		log.Fatalf("Kube Mirror encounered unexpected error: %v", err)
@@ -84,20 +84,17 @@ func Serve(l net.Listener, cache *Cache) error {
 }
 
 func loopUpdate(c *Cache, kc *KubeClient) {
-	ticker := time.NewTicker(time.Millisecond * 500)
-	go func() {
-		for _ = range ticker.C {
-			pods, err := kc.getPods()
-			if err != nil {
-				log.Printf("Could not get pods from %v: %v", kc.BaseURL, err)
-			}
+	pods, err := kc.getPods()
+	if err != nil {
+		log.Printf("Could not get pods from %v: %v", kc.BaseURL, err)
+	}
 
-			if pods != nil {
-				log.Printf("Receive %d pods from %v", len(pods), kc.BaseURL)
-				c.setPods(pods)
-			}
-		}
-	}()
+	if pods != nil {
+		log.Printf("Receive %d pods from %v", len(pods), kc.BaseURL)
+		c.setPods(pods)
+	}
+	time.Sleep(time.Millisecond * 500)
+	loopUpdate(c, kc)
 }
 
 func NewCache() *Cache {
