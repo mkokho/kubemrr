@@ -27,7 +27,11 @@ func NewGetCommand() *cobra.Command {
 }
 
 func RunGet(cmd *cobra.Command, args []string, out io.Writer) (err error) {
-	if args[0] != "pod" {
+	if len(args) < 1 {
+		return nil
+	}
+
+	if args[0] != "pod" || args[0] != "po" || args[0] != "pods" {
 		return nil
 	}
 
