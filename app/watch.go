@@ -6,9 +6,6 @@ import (
 	"net"
 	"net/http"
 	"net/rpc"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 func NewWatchCommand() *cobra.Command {
@@ -39,19 +36,10 @@ func RunWatch(cmd *cobra.Command, args []string) {
 	if err != nil {
 		log.Fatalf("Kube Mirror failed to start on %s: %v", bind, err)
 	}
-	go http.Serve(l, nil)
-	log.Printf("Kube Mirror started on %s\n", bind)
-	waitForSigterm()
-	log.Println("Kube Mirror stopped")
-}
 
-func waitForSigterm() {
-	term := make(chan os.Signal)
-	signal.Notify(term, os.Interrupt, syscall.SIGTERM)
-	select {
-	case <-term:
-		log.Println("Received SIGTERM, exiting gracefully...")
-	}
+	log.Printf("Kube Mirror is listening on %s\n", bind)
+	http.Serve(l, nil)
+	log.Println("Kube Mirror has stopped")
 }
 
 func (c *Cache) Pods(f *Filter, pods *[]Pod) error {
