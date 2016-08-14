@@ -28,18 +28,26 @@ type Filter struct {
 
 func RunWatch(cmd *cobra.Command, args []string) {
 	bind := GetBind(cmd)
-	c := Cache{}
-	rpc.Register(&c)
-	rpc.HandleHTTP()
 
 	l, err := net.Listen("tcp", bind)
 	if err != nil {
-		log.Fatalf("Kube Mirror failed to start on %s: %v", bind, err)
+		log.Fatalf("Kube Mirror failed to bind on %s: %v", bind, err)
 	}
 
 	log.Printf("Kube Mirror is listening on %s\n", bind)
-	http.Serve(l, nil)
+	err = Serve(l, &Cache{})
+	if err != nil {
+		log.Fatalf("Kube Mirror encounered unexpected error: %v", err)
+	}
+
 	log.Println("Kube Mirror has stopped")
+}
+
+func Serve(l net.Listener, cache *Cache) error {
+	c := cache
+	rpc.Register(&c)
+	rpc.HandleHTTP()
+	return http.Serve(l, nil)
 }
 
 func (c *Cache) Pods(f *Filter, pods *[]Pod) error {
