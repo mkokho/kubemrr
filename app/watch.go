@@ -5,21 +5,13 @@ import (
 	"github.com/spf13/cobra"
 	"log"
 	"net"
-	"net/http"
-	"net/rpc"
 	"net/url"
-	"sync"
 	"time"
 )
 
 type (
 	Filter struct {
 		NamePrefix string
-	}
-
-	Cache struct {
-		pods []Pod
-		mu   *sync.RWMutex
 	}
 )
 
@@ -52,11 +44,11 @@ func RunWatch(cmd *cobra.Command, args []string) {
 
 	log.Printf("Kube Mirror is listening on %s\n", bind)
 
-	c := NewCache()
+	c := NewMrrCache()
 	kc := NewKubeClient()
 	kc.BaseURL = url
 	go loopUpdate(c, kc)
-	err = Serve(l, c)
+	err = ServeMrrCache(l, c)
 	if err != nil {
 		log.Fatalf("Kube Mirror encounered unexpected error: %v", err)
 	}
@@ -77,13 +69,7 @@ func parseArgs(args []string) (*url.URL, error) {
 	return url, nil
 }
 
-func Serve(l net.Listener, cache *Cache) error {
-	rpc.Register(cache)
-	rpc.HandleHTTP()
-	return http.Serve(l, nil)
-}
-
-func loopUpdate(c *Cache, kc *KubeClient) {
+func loopUpdate(c *MrrCache, kc *KubeClient) {
 	pods, err := kc.getPods()
 	if err != nil {
 		log.Printf("Could not get pods from %v: %v", kc.BaseURL, err)
@@ -95,24 +81,4 @@ func loopUpdate(c *Cache, kc *KubeClient) {
 	}
 	time.Sleep(time.Millisecond * 500)
 	loopUpdate(c, kc)
-}
-
-func NewCache() *Cache {
-	return &Cache{
-		mu: &sync.RWMutex{},
-	}
-}
-
-func (c *Cache) Pods(f *Filter, pods *[]Pod) error {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
-	*pods = c.pods
-	return nil
-}
-
-func (c *Cache) setPods(pods []Pod) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.pods = pods
 }

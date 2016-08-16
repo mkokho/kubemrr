@@ -1,10 +1,10 @@
 package app
 
 import (
+	"fmt"
 	"github.com/spf13/cobra"
 	"io"
 	"log"
-	"net/rpc"
 	"os"
 	"strings"
 )
@@ -15,7 +15,7 @@ func NewGetCommand() *cobra.Command {
 		Short: "Asks mirror for resources",
 		Long:  `Asks mirror for resources`,
 		Run: func(cmd *cobra.Command, args []string) {
-			err := RunGet(cmd, args, os.Stdout)
+			err := RunGet(cmd, args, os.Stdout, os.Stderr)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -26,26 +26,28 @@ func NewGetCommand() *cobra.Command {
 	return cmd
 }
 
-func RunGet(cmd *cobra.Command, args []string, out io.Writer) (err error) {
+func RunGet(cmd *cobra.Command, args []string, out io.Writer, stderr io.Writer) (err error) {
 	if len(args) < 1 {
+		fmt.Fprintf(stderr, "At least one argument is expected")
 		return nil
 	}
 
-	if args[0] != "pod" || args[0] != "po" || args[0] != "pods" {
+	if args[0] != "pod" && args[0] != "po" && args[0] != "pods" {
+		fmt.Fprintf(stderr, "Expected one of (po|pod|pods), given %#v", args)
 		return nil
 	}
 
 	bind := GetBind(cmd)
-	client, err := rpc.DialHTTP("tcp", bind)
+	client, err := NewMrrClient(bind)
 	if err != nil {
-		return
+		fmt.Fprintf(stderr, "Could not create client to kubemrr: %v", err)
+		return nil
 	}
 
-	f := Filter{}
-	var pods []Pod
-	err = client.Call("Cache.Pods", f, &pods)
+	pods, err := client.Pods()
 	if err != nil {
-		return
+		fmt.Fprintf(stderr, "Server failed to return pods: %v", err)
+		return nil
 	}
 
 	prefix := ""
