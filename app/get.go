@@ -55,9 +55,11 @@ func RunGet(cmd *cobra.Command, args []string, out io.Writer, stderr io.Writer) 
 		prefix = args[1]
 	}
 
-	for _, pod := range filter(pods, prefix) {
+	for i, pod := range filter(pods, prefix) {
+		if i != 0 {
+			out.Write([]byte(" "))
+		}
 		out.Write([]byte(pod.Name))
-		out.Write([]byte(" "))
 	}
 
 	return nil
