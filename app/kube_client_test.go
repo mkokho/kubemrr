@@ -60,29 +60,29 @@ func TestFetchPods(t *testing.T) {
 	}
 }
 
-func TestFetchServices(t *testing.T) {
+func TestFetchDeployments(t *testing.T) {
 	setup()
 	defer teardown()
 
-	mux.HandleFunc("/api/v1/services", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/apis/extensions/v1beta1/deployments", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `
 			{
 				"items": [
-					{ "metadata": { "name": "svc1" } },
-					{ "metadata": { "name": "svc2" } }
+					{ "metadata": { "name": "deployment1" } },
+					{ "metadata": { "name": "deployment2" } }
 				]
 			}`)
 	},
 	)
 
-	svc, err := client.getServices()
+	svc, err := client.getDeployments()
 	if err != nil {
 		t.Errorf("getServices returned error: %v", err)
 	}
 
-	want := []Service{
-		Service{ObjectMeta: ObjectMeta{Name: "svc1"}},
-		Service{ObjectMeta: ObjectMeta{Name: "svc2"}},
+	want := []Deployment{
+		Deployment{ObjectMeta: ObjectMeta{Name: "deployment1"}},
+		Deployment{ObjectMeta: ObjectMeta{Name: "deployment2"}},
 	}
 
 	if !reflect.DeepEqual(svc, want) {

@@ -49,6 +49,21 @@ func (kc *KubeClient) getServices() ([]Service, error) {
 	return svcList.Items, nil
 }
 
+func (kc *KubeClient) getDeployments() ([]Deployment, error) {
+	req, err := kc.newRequest("GET", "/apis/extensions/v1beta1/deployments", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	ds := new(DeploymentList)
+	err = kc.Do(req, ds)
+	if err != nil {
+		return nil, err
+	}
+
+	return ds.Items, nil
+}
+
 func (kc *KubeClient) newRequest(method string, urlStr string, body interface{}) (*http.Request, error) {
 	rel, err := url.Parse(urlStr)
 	if err != nil {

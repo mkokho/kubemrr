@@ -241,3 +241,14 @@ type PodCondition struct {
 	Type   string `json:"type" description:"Type is the type of the condition. Currently only Ready."`
 	Status string `json:"status" description:"Status is the status of the condition. Can be True, False, Unknown."`
 }
+
+// Extensions
+
+type Deployment struct {
+	ObjectMeta `json:"metadata,omitempty"`
+}
+
+type DeploymentList struct {
+	// Items is the list of deployments.
+	Items []Deployment `json:"items"`
+}
