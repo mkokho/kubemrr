@@ -22,6 +22,7 @@ func setupRPC() {
 
 	cache = NewMrrCache()
 	cache.setPods([]Pod{Pod{ObjectMeta: ObjectMeta{Name: "pod1"}}})
+	cache.setServices([]Service{Service{ObjectMeta: ObjectMeta{Name: "service1"}}})
 	go ServeMrrCache(l, cache)
 
 	mrrClient, err = NewMrrClient(l.Addr().String())
@@ -40,5 +41,18 @@ func TestClientPods(t *testing.T) {
 
 	if !reflect.DeepEqual(result, cache.pods) {
 		t.Errorf("Expected pods %v, found %v", cache.pods, result)
+	}
+}
+
+func TestClientServices(t *testing.T) {
+	once.Do(setupRPC)
+
+	result, err := mrrClient.Services()
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+
+	if !reflect.DeepEqual(result, cache.services) {
+		t.Errorf("Expected services %v, found %v", cache.services, result)
 	}
 }
