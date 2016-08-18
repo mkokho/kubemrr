@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"regexp"
 	"strings"
 )
 
@@ -32,8 +33,15 @@ func RunGet(cmd *cobra.Command, args []string, out io.Writer, stderr io.Writer) 
 		return nil
 	}
 
-	if args[0] != "pod" && args[0] != "po" && args[0] != "pods" {
-		fmt.Fprintf(stderr, "Expected one of (po|pod|pods), given %#v", args)
+	regex := "(po|pod|pods|svc|service|services)"
+	argMatcher, err := regexp.Compile(regex)
+	if err != nil {
+		fmt.Fprintf(stderr, "Could not compile regular expression: %v", err)
+		return nil
+	}
+
+	if !argMatcher.MatchString(args[0]) {
+		fmt.Fprintf(stderr, "Expected %s, given %#v", regex, args)
 		return nil
 	}
 
@@ -44,18 +52,27 @@ func RunGet(cmd *cobra.Command, args []string, out io.Writer, stderr io.Writer) 
 		return nil
 	}
 
-	pods, err := client.Pods()
+	if strings.HasPrefix(args[0], "p") {
+		err = outputPods(client, out)
+	} else {
+		err = outputServices(client, out)
+	}
+
 	if err != nil {
-		fmt.Fprintf(stderr, "Server failed to return pods: %v", err)
+		fmt.Fprint(stderr, err)
 		return nil
 	}
 
-	prefix := ""
-	if len(args) == 2 {
-		prefix = args[1]
+	return nil
+}
+
+func outputPods(client *MrrClientDefault, out io.Writer) error {
+	pods, err := client.Pods()
+	if err != nil {
+		return err
 	}
 
-	for i, pod := range filter(pods, prefix) {
+	for i, pod := range pods {
 		if i != 0 {
 			out.Write([]byte(" "))
 		}
@@ -65,12 +82,18 @@ func RunGet(cmd *cobra.Command, args []string, out io.Writer, stderr io.Writer) 
 	return nil
 }
 
-func filter(vs []Pod, prefix string) []Pod {
-	vsf := make([]Pod, 0)
-	for _, v := range vs {
-		if strings.HasPrefix(v.Name, prefix) {
-			vsf = append(vsf, v)
-		}
+func outputServices(client *MrrClientDefault, out io.Writer) error {
+	services, err := client.Services()
+	if err != nil {
+		return err
 	}
-	return vsf
+
+	for i, svc := range services {
+		if i != 0 {
+			out.Write([]byte(" "))
+		}
+		out.Write([]byte(svc.Name))
+	}
+
+	return nil
 }
