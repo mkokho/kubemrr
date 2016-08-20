@@ -27,7 +27,8 @@ var RootCmd = &cobra.Command{
 }
 
 func init() {
-	RootCmd.AddCommand(app.NewGetCommand())
+	f := &app.DefaultFactory{}
+	RootCmd.AddCommand(app.NewGetCommand(f))
 	RootCmd.AddCommand(app.NewWatchCommand())
 }
 

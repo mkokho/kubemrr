@@ -56,6 +56,7 @@ func (c *MrrCache) setServices(services []Service) {
 
 type MrrClient interface {
 	Pods() ([]Pod, error)
+	Services() ([]Service, error)
 }
 
 type MrrClientDefault struct {

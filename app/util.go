@@ -3,7 +3,9 @@ package app
 import (
 	"fmt"
 	"github.com/spf13/cobra"
+	"io"
 	"log"
+	"os"
 )
 
 func AddCommonFlags(cmd *cobra.Command) {
@@ -23,4 +25,24 @@ func GetBind(cmd *cobra.Command) string {
 	}
 
 	return fmt.Sprintf("%s:%d", address, port)
+}
+
+type Factory interface {
+	MrrClient(bind string) (MrrClient, error)
+	StdOut() io.Writer
+	StdErr() io.Writer
+}
+
+type DefaultFactory struct{}
+
+func (f *DefaultFactory) MrrClient(address string) (MrrClient, error) {
+	return NewMrrClient(address)
+}
+
+func (f *DefaultFactory) StdOut() io.Writer {
+	return os.Stdout
+}
+
+func (f *DefaultFactory) StdErr() io.Writer {
+	return os.Stderr
 }

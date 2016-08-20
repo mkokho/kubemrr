@@ -5,18 +5,17 @@ import (
 	"github.com/spf13/cobra"
 	"io"
 	"log"
-	"os"
 	"regexp"
 	"strings"
 )
 
-func NewGetCommand() *cobra.Command {
+func NewGetCommand(f Factory) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "get",
 		Short: "Asks mirror for resources",
 		Long:  `Asks mirror for resources`,
 		Run: func(cmd *cobra.Command, args []string) {
-			err := RunGet(cmd, args, os.Stdout, os.Stderr)
+			err := RunGet(f, cmd, args)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -27,46 +26,46 @@ func NewGetCommand() *cobra.Command {
 	return cmd
 }
 
-func RunGet(cmd *cobra.Command, args []string, out io.Writer, stderr io.Writer) (err error) {
+func RunGet(f Factory, cmd *cobra.Command, args []string) (err error) {
 	if len(args) < 1 {
-		fmt.Fprintf(stderr, "At least one argument is expected")
+		fmt.Fprintf(f.StdErr(), "At least one argument is expected")
 		return nil
 	}
 
 	regex := "(po|pod|pods|svc|service|services)"
 	argMatcher, err := regexp.Compile(regex)
 	if err != nil {
-		fmt.Fprintf(stderr, "Could not compile regular expression: %v", err)
+		fmt.Fprintf(f.StdErr(), "Could not compile regular expression: %v", err)
 		return nil
 	}
 
 	if !argMatcher.MatchString(args[0]) {
-		fmt.Fprintf(stderr, "Expected %s, given %#v", regex, args)
+		fmt.Fprintf(f.StdErr(), "Expected %s, given %#v", regex, args)
 		return nil
 	}
 
 	bind := GetBind(cmd)
-	client, err := NewMrrClient(bind)
+	client, err := f.MrrClient(bind)
 	if err != nil {
-		fmt.Fprintf(stderr, "Could not create client to kubemrr: %v", err)
+		fmt.Fprintf(f.StdErr(), "Could not create client to kubemrr: %v", err)
 		return nil
 	}
 
 	if strings.HasPrefix(args[0], "p") {
-		err = outputPods(client, out)
+		err = outputPods(client, f.StdOut())
 	} else {
-		err = outputServices(client, out)
+		err = outputServices(client, f.StdOut())
 	}
 
 	if err != nil {
-		fmt.Fprint(stderr, err)
+		fmt.Fprint(f.StdErr(), err)
 		return nil
 	}
 
 	return nil
 }
 
-func outputPods(client *MrrClientDefault, out io.Writer) error {
+func outputPods(client MrrClient, out io.Writer) error {
 	pods, err := client.Pods()
 	if err != nil {
 		return err
@@ -82,7 +81,7 @@ func outputPods(client *MrrClientDefault, out io.Writer) error {
 	return nil
 }
 
-func outputServices(client *MrrClientDefault, out io.Writer) error {
+func outputServices(client MrrClient, out io.Writer) error {
 	services, err := client.Services()
 	if err != nil {
 		return err
