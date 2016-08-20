@@ -11,9 +11,18 @@ import (
 
 func NewGetCommand(f Factory) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "get",
+		Use:   "get [flags] [resource]",
 		Short: "Asks mirror for resources",
-		Long:  `Asks mirror for resources`,
+		Long: `
+Ask mirror of Kubernetes API server for resources.
+
+Supported resources are:
+  - po, pod, pod
+  - svc, service, services
+
+Currently it outputs only names separated by space.
+This is enought to make autocompletion works fast.
+		`,
 		Run: func(cmd *cobra.Command, args []string) {
 			err := RunGet(f, cmd, args)
 			if err != nil {
@@ -28,7 +37,7 @@ func NewGetCommand(f Factory) *cobra.Command {
 
 func RunGet(f Factory, cmd *cobra.Command, args []string) (err error) {
 	if len(args) < 1 {
-		fmt.Fprintf(f.StdErr(), "At least one argument is expected")
+		fmt.Fprintf(f.StdErr(), "You must specify the resource type")
 		return nil
 	}
 

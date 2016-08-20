@@ -17,9 +17,11 @@ type (
 
 func NewWatchCommand() *cobra.Command {
 	var watchCmd = &cobra.Command{
-		Use:   "watch",
-		Short: "Starts a mirror of one or several Kubernetes API servers",
-		Long:  "Starts a mirror of one or several Kubernetes API servers",
+		Use:   "watch [flags] [url]",
+		Short: "Starts a mirror of one Kubernetes API server",
+		Long: `
+Starts a mirror of one Kubernetes API server
+`,
 		Run: func(cmd *cobra.Command, args []string) {
 			RunWatch(cmd, args)
 		},
@@ -30,6 +32,11 @@ func NewWatchCommand() *cobra.Command {
 }
 
 func RunWatch(cmd *cobra.Command, args []string) {
+	if len(args) != 1 {
+		fmt.Printf("You must specify URL of Kubernetes API")
+		return
+	}
+
 	bind := GetBind(cmd)
 
 	l, err := net.Listen("tcp", bind)

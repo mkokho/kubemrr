@@ -9,8 +9,8 @@ import (
 )
 
 func AddCommonFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("address", "a", "127.0.0.1", "The IP address where mirror accessible")
-	cmd.Flags().IntP("port", "p", 33033, "The port on mirror is accessible")
+	cmd.Flags().StringP("address", "a", "127.0.0.1", "The IP address where mirror is accessible")
+	cmd.Flags().IntP("port", "p", 33033, "The port on which mirror is accessible")
 }
 
 func GetBind(cmd *cobra.Command) string {
