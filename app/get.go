@@ -36,8 +36,13 @@ This is enought to make autocompletion works fast.
 }
 
 func RunGet(f Factory, cmd *cobra.Command, args []string) (err error) {
-	if len(args) < 1 {
+	if len(args) == 0 {
 		fmt.Fprintf(f.StdErr(), "You must specify the resource type")
+		return nil
+	}
+
+	if len(args) > 1 {
+		fmt.Fprintf(f.StdErr(), "Only one argument is expected")
 		return nil
 	}
 
@@ -49,7 +54,7 @@ func RunGet(f Factory, cmd *cobra.Command, args []string) (err error) {
 	}
 
 	if !argMatcher.MatchString(args[0]) {
-		fmt.Fprintf(f.StdErr(), "Expected %s, given %#v", regex, args)
+		fmt.Fprintf(f.StdErr(), "Unsupported resource type [%s]", args)
 		return nil
 	}
 

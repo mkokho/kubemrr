@@ -83,3 +83,17 @@ func (mc *MrrClientDefault) Services() ([]Service, error) {
 	err := mc.conn.Call("MrrCache.Services", &Filter{}, &services)
 	return services, err
 }
+
+type TestMirrorClient struct {
+	err      error
+	pods     []Pod
+	services []Service
+}
+
+func (mc *TestMirrorClient) Pods() ([]Pod, error) {
+	return mc.pods, mc.err
+}
+
+func (mc *TestMirrorClient) Services() ([]Service, error) {
+	return mc.services, mc.err
+}

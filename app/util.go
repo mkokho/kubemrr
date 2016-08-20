@@ -46,3 +46,21 @@ func (f *DefaultFactory) StdOut() io.Writer {
 func (f *DefaultFactory) StdErr() io.Writer {
 	return os.Stderr
 }
+
+type TestFactory struct {
+	mrrClient MrrClient
+	stdOut    io.Writer
+	stdErr    io.Writer
+}
+
+func (f *TestFactory) MrrClient(address string) (MrrClient, error) {
+	return f.mrrClient, nil
+}
+
+func (f *TestFactory) StdOut() io.Writer {
+	return f.stdOut
+}
+
+func (f *TestFactory) StdErr() io.Writer {
+	return f.stdErr
+}
