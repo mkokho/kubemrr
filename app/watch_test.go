@@ -32,3 +32,7 @@ func TestRunWatchInvalidArgs(t *testing.T) {
 		}
 	}
 }
+
+func TestRunWatch(t *testing.T) {
+
+}

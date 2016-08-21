@@ -54,8 +54,7 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) {
 	log.Printf("Kube Mirror is listening on %s\n", bind)
 
 	c := f.MrrCache()
-	kc := NewKubeClient()
-	kc.BaseURL = url
+	kc := f.KubeClient(url)
 	go loopUpdatePods(c, kc)
 	go loopUpdateServices(c, kc)
 	err = f.Serve(l, c)
@@ -67,22 +66,22 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) {
 	log.Println("Kube Mirror has stopped")
 }
 
-func loopUpdatePods(c *MrrCache, kc *KubeClient) {
-	pods, err := kc.getPods()
+func loopUpdatePods(c *MrrCache, kc KubeClient) {
+	pods, err := kc.GetPods()
 	if err != nil {
-		log.Printf("Could not get pods from %v: %v", kc.BaseURL, err)
+		log.Printf("Could not get pods from %v: %v", kc.BaseURL(), err)
 	}
 
 	if pods != nil {
-		log.Printf("Received %d pods from %v", len(pods), kc.BaseURL)
+		log.Printf("Received %d pods from %v", len(pods), kc.BaseURL())
 		c.setPods(pods)
 	}
 	time.Sleep(time.Millisecond * 500)
 	loopUpdatePods(c, kc)
 }
 
-func loopUpdateServices(c *MrrCache, kc *KubeClient) {
-	services, err := kc.getServices()
+func loopUpdateServices(c *MrrCache, kc KubeClient) {
+	services, err := kc.GetServices()
 	if err != nil {
 		log.Printf("Could not get services from %v: %v", kc.BaseURL, err)
 	}

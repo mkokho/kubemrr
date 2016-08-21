@@ -9,24 +9,38 @@ import (
 	"net/url"
 )
 
-type KubeClient struct {
-	client  *http.Client
-	BaseURL *url.URL
+type KubeClient interface {
+	BaseURL() *url.URL
+	GetPods() ([]Pod, error)
+	GetServices() ([]Service, error)
+	GetDeployments() ([]Deployment, error)
 }
 
-func NewKubeClient() *KubeClient {
-	c := &KubeClient{client: http.DefaultClient}
+type DefaultKubeClient struct {
+	client  *http.Client
+	baseURL *url.URL
+}
+
+func NewKubeClient(url *url.URL) KubeClient {
+	c := &DefaultKubeClient{
+		client:  http.DefaultClient,
+		baseURL: url,
+	}
 	return c
 }
 
-func (kc *KubeClient) getPods() ([]Pod, error) {
+func (kc *DefaultKubeClient) BaseURL() *url.URL {
+	return kc.baseURL
+}
+
+func (kc *DefaultKubeClient) GetPods() ([]Pod, error) {
 	req, err := kc.newRequest("GET", "api/v1/pods", nil)
 	if err != nil {
 		return nil, err
 	}
 
 	podList := new(PodList)
-	err = kc.Do(req, podList)
+	err = kc.do(req, podList)
 	if err != nil {
 		return nil, err
 	}
@@ -34,14 +48,14 @@ func (kc *KubeClient) getPods() ([]Pod, error) {
 	return podList.Items, nil
 }
 
-func (kc *KubeClient) getServices() ([]Service, error) {
+func (kc *DefaultKubeClient) GetServices() ([]Service, error) {
 	req, err := kc.newRequest("GET", "api/v1/services", nil)
 	if err != nil {
 		return nil, err
 	}
 
 	svcList := new(ServiceList)
-	err = kc.Do(req, svcList)
+	err = kc.do(req, svcList)
 	if err != nil {
 		return nil, err
 	}
@@ -49,14 +63,14 @@ func (kc *KubeClient) getServices() ([]Service, error) {
 	return svcList.Items, nil
 }
 
-func (kc *KubeClient) getDeployments() ([]Deployment, error) {
+func (kc *DefaultKubeClient) GetDeployments() ([]Deployment, error) {
 	req, err := kc.newRequest("GET", "/apis/extensions/v1beta1/deployments", nil)
 	if err != nil {
 		return nil, err
 	}
 
 	ds := new(DeploymentList)
-	err = kc.Do(req, ds)
+	err = kc.do(req, ds)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +78,7 @@ func (kc *KubeClient) getDeployments() ([]Deployment, error) {
 	return ds.Items, nil
 }
 
-func (kc *KubeClient) newRequest(method string, urlStr string, body interface{}) (*http.Request, error) {
+func (kc *DefaultKubeClient) newRequest(method string, urlStr string, body interface{}) (*http.Request, error) {
 	rel, err := url.Parse(urlStr)
 	if err != nil {
 		return nil, err
@@ -79,7 +93,7 @@ func (kc *KubeClient) newRequest(method string, urlStr string, body interface{})
 		}
 	}
 
-	u := kc.BaseURL.ResolveReference(rel)
+	u := kc.baseURL.ResolveReference(rel)
 	req, err := http.NewRequest(method, u.String(), buf)
 	if err != nil {
 		return nil, err
@@ -92,7 +106,7 @@ func (kc *KubeClient) newRequest(method string, urlStr string, body interface{})
 	return req, nil
 }
 
-func (c *KubeClient) Do(req *http.Request, v interface{}) error {
+func (c *DefaultKubeClient) do(req *http.Request, v interface{}) error {
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return err

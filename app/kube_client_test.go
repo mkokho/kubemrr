@@ -12,7 +12,7 @@ import (
 var (
 	mux    *http.ServeMux
 	server *httptest.Server
-	client *KubeClient
+	client KubeClient
 )
 
 func setup() {
@@ -21,8 +21,8 @@ func setup() {
 	server = httptest.NewServer(mux)
 
 	url, _ := url.Parse(server.URL)
-	client = NewKubeClient()
-	client.BaseURL = url
+	f := &DefaultFactory{}
+	client = f.KubeClient(url)
 }
 
 // teardown closes the test HTTP server.
@@ -30,7 +30,7 @@ func teardown() {
 	server.Close()
 }
 
-func TestFetchPods(t *testing.T) {
+func TestGetPods(t *testing.T) {
 	setup()
 	defer teardown()
 
@@ -45,9 +45,9 @@ func TestFetchPods(t *testing.T) {
 	},
 	)
 
-	pods, err := client.getPods()
+	pods, err := client.GetPods()
 	if err != nil {
-		t.Errorf("getPods returned error: %v", err)
+		t.Errorf("GetPods returned error: %v", err)
 	}
 
 	want := []Pod{
@@ -56,11 +56,41 @@ func TestFetchPods(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(pods, want) {
-		t.Errorf("getPods returned %+v, want %+v", pods, want)
+		t.Errorf("GetPods returned %+v, want %+v", pods, want)
 	}
 }
 
-func TestFetchDeployments(t *testing.T) {
+func TestGetServices(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc("/api/v1/services", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `
+			{
+				"items": [
+					{ "metadata": { "name": "service1" } },
+					{ "metadata": { "name": "service2" } }
+				]
+			}`)
+	},
+	)
+
+	services, err := client.GetServices()
+	if err != nil {
+		t.Errorf("GetServices returned error: %v", err)
+	}
+
+	want := []Service{
+		Service{ObjectMeta: ObjectMeta{Name: "service1"}},
+		Service{ObjectMeta: ObjectMeta{Name: "service2"}},
+	}
+
+	if !reflect.DeepEqual(services, want) {
+		t.Errorf("GetServices returned %+v, want %+v", services, want)
+	}
+}
+
+func TestGetDeployments(t *testing.T) {
 	setup()
 	defer teardown()
 
@@ -75,9 +105,9 @@ func TestFetchDeployments(t *testing.T) {
 	},
 	)
 
-	svc, err := client.getDeployments()
+	svc, err := client.GetDeployments()
 	if err != nil {
-		t.Errorf("getServices returned error: %v", err)
+		t.Errorf("GetDeployments returned error: %v", err)
 	}
 
 	want := []Deployment{
@@ -86,6 +116,6 @@ func TestFetchDeployments(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(svc, want) {
-		t.Errorf("getPods returned %+v, want %+v", svc, want)
+		t.Errorf("GetDeployments returned %+v, want %+v", svc, want)
 	}
 }
