@@ -128,3 +128,29 @@ func (c *DefaultKubeClient) do(req *http.Request, v interface{}) error {
 
 	return err
 }
+
+type TestKubeClient struct {
+	baseURL            *url.URL
+	hitsGetPods        int
+	hitsGetServices    int
+	hitsGetDeployments int
+}
+
+func (kc *TestKubeClient) BaseURL() *url.URL {
+	return kc.baseURL
+}
+
+func (kc *TestKubeClient) GetPods() ([]Pod, error) {
+	kc.hitsGetPods += 1
+	return []Pod{Pod{ObjectMeta: ObjectMeta{Name: "pod1"}}}, nil
+}
+
+func (kc *TestKubeClient) GetServices() ([]Service, error) {
+	kc.hitsGetServices += 1
+	return []Service{Service{ObjectMeta: ObjectMeta{Name: "service1"}}}, nil
+}
+
+func (kc *TestKubeClient) GetDeployments() ([]Deployment, error) {
+	kc.hitsGetDeployments += 1
+	return []Deployment{Deployment{ObjectMeta: ObjectMeta{Name: "deployment1"}}}, nil
+}

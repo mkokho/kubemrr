@@ -28,12 +28,19 @@ Starts a mirror of one Kubernetes API server
 	}
 
 	AddCommonFlags(watchCmd)
+	watchCmd.Flags().Duration("interval", 500*time.Millisecond, "Interval between requests to the server")
 	return watchCmd
 }
 
 func RunWatch(f Factory, cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
 		fmt.Fprintf(f.StdErr(), "You must specify URL of Kubernetes API")
+		return
+	}
+
+	interval, err := cmd.Flags().GetDuration("interval")
+	if err != nil {
+		fmt.Fprintf(f.StdErr(), "Could not parse value of --interval")
 		return
 	}
 
@@ -55,8 +62,9 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) {
 
 	c := f.MrrCache()
 	kc := f.KubeClient(url)
-	go loopUpdatePods(c, kc)
-	go loopUpdateServices(c, kc)
+	go loopUpdatePods(c, kc, interval)
+	go loopUpdateServices(c, kc, interval)
+	go loopUpdateDeployments(c, kc, interval)
 	err = f.Serve(l, c)
 	if err != nil {
 		fmt.Fprintf(f.StdErr(), "Kube Mirror encounered unexpected error: %v", err)
@@ -66,7 +74,7 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) {
 	log.Println("Kube Mirror has stopped")
 }
 
-func loopUpdatePods(c *MrrCache, kc KubeClient) {
+func loopUpdatePods(c *MrrCache, kc KubeClient, interval time.Duration) {
 	pods, err := kc.GetPods()
 	if err != nil {
 		log.Printf("Could not get pods from %v: %v", kc.BaseURL(), err)
@@ -76,11 +84,11 @@ func loopUpdatePods(c *MrrCache, kc KubeClient) {
 		log.Printf("Received %d pods from %v", len(pods), kc.BaseURL())
 		c.setPods(pods)
 	}
-	time.Sleep(time.Millisecond * 500)
-	loopUpdatePods(c, kc)
+	time.Sleep(interval)
+	loopUpdatePods(c, kc, interval)
 }
 
-func loopUpdateServices(c *MrrCache, kc KubeClient) {
+func loopUpdateServices(c *MrrCache, kc KubeClient, interval time.Duration) {
 	services, err := kc.GetServices()
 	if err != nil {
 		log.Printf("Could not get services from %v: %v", kc.BaseURL, err)
@@ -90,6 +98,19 @@ func loopUpdateServices(c *MrrCache, kc KubeClient) {
 		log.Printf("Received %d services from %v", len(services), kc.BaseURL)
 		c.setServices(services)
 	}
-	time.Sleep(time.Millisecond * 500)
-	loopUpdateServices(c, kc)
+	time.Sleep(interval)
+	loopUpdateServices(c, kc, interval)
+}
+
+func loopUpdateDeployments(c *MrrCache, kc KubeClient, interval time.Duration) {
+	deployments, err := kc.GetDeployments()
+	if err != nil {
+		log.Printf("Could not get deployments from %v: %v", kc.BaseURL, err)
+	}
+
+	if deployments != nil {
+		log.Printf("Received %d deployments from %v", len(deployments), kc.BaseURL)
+	}
+	time.Sleep(interval)
+	loopUpdateDeployments(c, kc, interval)
 }

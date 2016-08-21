@@ -69,10 +69,11 @@ func (f *DefaultFactory) Serve(l net.Listener, cache *MrrCache) error {
 }
 
 type TestFactory struct {
-	mrrClient MrrClient
-	mrrCache  MrrCache
-	stdOut    io.Writer
-	stdErr    io.Writer
+	mrrClient  MrrClient
+	mrrCache   *MrrCache
+	kubeClient KubeClient
+	stdOut     io.Writer
+	stdErr     io.Writer
 }
 
 func (f *TestFactory) MrrClient(address string) (MrrClient, error) {
@@ -80,15 +81,23 @@ func (f *TestFactory) MrrClient(address string) (MrrClient, error) {
 }
 
 func (f *TestFactory) StdOut() io.Writer {
-	return f.stdOut
+	if f.stdOut == nil {
+		return os.Stdout
+	} else {
+		return f.stdOut
+	}
 }
 
 func (f *TestFactory) StdErr() io.Writer {
-	return f.stdErr
+	if f.stdErr == nil {
+		return os.Stdout
+	} else {
+		return f.stdErr
+	}
 }
 
 func (f *TestFactory) MrrCache() *MrrCache {
-	return NewMrrCache()
+	return f.mrrCache
 }
 
 func (f *TestFactory) Serve(l net.Listener, cache *MrrCache) error {
@@ -96,5 +105,5 @@ func (f *TestFactory) Serve(l net.Listener, cache *MrrCache) error {
 }
 
 func (f *TestFactory) KubeClient(url *url.URL) KubeClient {
-	return nil
+	return f.kubeClient
 }
