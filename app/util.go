@@ -40,14 +40,26 @@ type Factory interface {
 	StdErr() io.Writer
 }
 
-type DefaultFactory struct{}
+type DefaultFactory struct {
+	stdOut io.Writer
+}
+
+func NewFactory(stdOut io.Writer) Factory {
+	return &DefaultFactory{
+		stdOut: stdOut,
+	}
+}
 
 func (f *DefaultFactory) MrrClient(address string) (MrrClient, error) {
 	return NewMrrClient(address)
 }
 
 func (f *DefaultFactory) StdOut() io.Writer {
-	return os.Stdout
+	if f.stdOut == nil {
+		return os.Stdout
+	} else {
+		return f.stdOut
+	}
 }
 
 func (f *DefaultFactory) StdErr() io.Writer {

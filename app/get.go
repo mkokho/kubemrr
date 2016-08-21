@@ -49,19 +49,19 @@ func RunGet(f Factory, cmd *cobra.Command, args []string) (err error) {
 	regex := "(po|pod|pods|svc|service|services|deployment|deployments)"
 	argMatcher, err := regexp.Compile(regex)
 	if err != nil {
-		fmt.Fprintf(f.StdErr(), "Could not compile regular expression: %v", err)
+		fmt.Fprintf(f.StdErr(), "Could not compile regular expression: %v\n", err)
 		return nil
 	}
 
 	if !argMatcher.MatchString(args[0]) {
-		fmt.Fprintf(f.StdErr(), "Unsupported resource type [%s]", args)
+		fmt.Fprintf(f.StdErr(), "Unsupported resource type [%s]\n", args)
 		return nil
 	}
 
 	bind := GetBind(cmd)
 	client, err := f.MrrClient(bind)
 	if err != nil {
-		fmt.Fprintf(f.StdErr(), "Could not create client to kubemrr: %v", err)
+		fmt.Fprintf(f.StdErr(), "Could not create client to kubemrr: %v\n", err)
 		return nil
 	}
 
