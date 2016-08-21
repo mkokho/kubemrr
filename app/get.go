@@ -46,7 +46,7 @@ func RunGet(f Factory, cmd *cobra.Command, args []string) (err error) {
 		return nil
 	}
 
-	regex := "(po|pod|pods|svc|service|services)"
+	regex := "(po|pod|pods|svc|service|services|deployment|deployments)"
 	argMatcher, err := regexp.Compile(regex)
 	if err != nil {
 		fmt.Fprintf(f.StdErr(), "Could not compile regular expression: %v", err)
@@ -67,8 +67,10 @@ func RunGet(f Factory, cmd *cobra.Command, args []string) (err error) {
 
 	if strings.HasPrefix(args[0], "p") {
 		err = outputPods(client, f.StdOut())
-	} else {
+	} else if strings.HasPrefix(args[0], "s") {
 		err = outputServices(client, f.StdOut())
+	} else {
+		err = outputDeployments(client, f.StdOut())
 	}
 
 	if err != nil {
@@ -106,6 +108,22 @@ func outputServices(client MrrClient, out io.Writer) error {
 			out.Write([]byte(" "))
 		}
 		out.Write([]byte(svc.Name))
+	}
+
+	return nil
+}
+
+func outputDeployments(client MrrClient, out io.Writer) error {
+	deployments, err := client.Deployments()
+	if err != nil {
+		return err
+	}
+
+	for i, deployment := range deployments {
+		if i != 0 {
+			out.Write([]byte(" "))
+		}
+		out.Write([]byte(deployment.Name))
 	}
 
 	return nil

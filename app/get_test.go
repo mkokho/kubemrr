@@ -43,7 +43,7 @@ func TestRunGetInvalidArgs(t *testing.T) {
 	}
 }
 
-func TestRunGetPods(t *testing.T) {
+func TestRunGet(t *testing.T) {
 	tc := &TestMirrorClient{
 		pods: []Pod{
 			Pod{ObjectMeta: ObjectMeta{Name: "pod1"}},
@@ -52,6 +52,10 @@ func TestRunGetPods(t *testing.T) {
 		services: []Service{
 			Service{ObjectMeta: ObjectMeta{Name: "service1"}},
 			Service{ObjectMeta: ObjectMeta{Name: "service2"}},
+		},
+		deployments: []Deployment{
+			Deployment{ObjectMeta: ObjectMeta{Name: "deployment1"}},
+			Deployment{ObjectMeta: ObjectMeta{Name: "deployment2"}},
 		},
 	}
 	buf := bytes.NewBuffer([]byte{})
@@ -69,6 +73,10 @@ func TestRunGetPods(t *testing.T) {
 		{
 			aliases: []string{"svc", "service", "services"},
 			output:  "service1 service2",
+		},
+		{
+			aliases: []string{"deployment", "deployments"},
+			output:  "deployment1 deployment2",
 		},
 	}
 

@@ -6,9 +6,10 @@ import (
 )
 
 type MrrCache struct {
-	pods     []Pod
-	services []Service
-	mu       *sync.RWMutex
+	pods        []Pod
+	services    []Service
+	deployments []Deployment
+	mu          *sync.RWMutex
 }
 
 func NewMrrCache() *MrrCache {
@@ -33,6 +34,14 @@ func (c *MrrCache) Services(f *Filter, services *[]Service) error {
 	return nil
 }
 
+func (c *MrrCache) Deployments(f *Filter, deployments *[]Deployment) error {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	*deployments = c.deployments
+	return nil
+}
+
 func (c *MrrCache) setPods(pods []Pod) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -45,9 +54,16 @@ func (c *MrrCache) setServices(services []Service) {
 	c.services = services
 }
 
+func (c *MrrCache) setDeployments(deployments []Deployment) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.deployments = deployments
+}
+
 type MrrClient interface {
 	Pods() ([]Pod, error)
 	Services() ([]Service, error)
+	Deployments() ([]Deployment, error)
 }
 
 type MrrClientDefault struct {
@@ -75,10 +91,17 @@ func (mc *MrrClientDefault) Services() ([]Service, error) {
 	return services, err
 }
 
+func (mc *MrrClientDefault) Deployments() ([]Deployment, error) {
+	var deployments []Deployment
+	err := mc.conn.Call("MrrCache.Deployments", &Filter{}, &deployments)
+	return deployments, err
+}
+
 type TestMirrorClient struct {
-	err      error
-	pods     []Pod
-	services []Service
+	err         error
+	pods        []Pod
+	services    []Service
+	deployments []Deployment
 }
 
 func (mc *TestMirrorClient) Pods() ([]Pod, error) {
@@ -87,4 +110,8 @@ func (mc *TestMirrorClient) Pods() ([]Pod, error) {
 
 func (mc *TestMirrorClient) Services() ([]Service, error) {
 	return mc.services, mc.err
+}
+
+func (mc *TestMirrorClient) Deployments() ([]Deployment, error) {
+	return mc.deployments, mc.err
 }

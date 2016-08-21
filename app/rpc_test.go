@@ -25,6 +25,7 @@ func setupRPC() {
 	cache = f.MrrCache()
 	cache.setPods([]Pod{Pod{ObjectMeta: ObjectMeta{Name: "pod1"}}})
 	cache.setServices([]Service{Service{ObjectMeta: ObjectMeta{Name: "service1"}}})
+	cache.setDeployments([]Deployment{Deployment{ObjectMeta: ObjectMeta{Name: "deployment1"}}})
 	rpc.Register(cache)
 	rpc.HandleHTTP()
 	go http.Serve(l, nil)
@@ -58,5 +59,18 @@ func TestClientServices(t *testing.T) {
 
 	if !reflect.DeepEqual(result, cache.services) {
 		t.Errorf("Expected services %v, found %v", cache.services, result)
+	}
+}
+
+func TestClientDeployments(t *testing.T) {
+	once.Do(setupRPC)
+
+	result, err := mrrClient.Deployments()
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+
+	if !reflect.DeepEqual(result, cache.deployments) {
+		t.Errorf("Expected deployments %v, found %v", cache.deployments, result)
 	}
 }

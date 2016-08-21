@@ -91,11 +91,11 @@ func loopUpdatePods(c *MrrCache, kc KubeClient, interval time.Duration) {
 func loopUpdateServices(c *MrrCache, kc KubeClient, interval time.Duration) {
 	services, err := kc.GetServices()
 	if err != nil {
-		log.Printf("Could not get services from %v: %v", kc.BaseURL, err)
+		log.Printf("Could not get services from %v: %v", kc.BaseURL(), err)
 	}
 
 	if services != nil {
-		log.Printf("Received %d services from %v", len(services), kc.BaseURL)
+		log.Printf("Received %d services from %v", len(services), kc.BaseURL())
 		c.setServices(services)
 	}
 	time.Sleep(interval)
@@ -105,11 +105,12 @@ func loopUpdateServices(c *MrrCache, kc KubeClient, interval time.Duration) {
 func loopUpdateDeployments(c *MrrCache, kc KubeClient, interval time.Duration) {
 	deployments, err := kc.GetDeployments()
 	if err != nil {
-		log.Printf("Could not get deployments from %v: %v", kc.BaseURL, err)
+		log.Printf("Could not get deployments from %v: %v", kc.BaseURL(), err)
 	}
 
 	if deployments != nil {
-		log.Printf("Received %d deployments from %v", len(deployments), kc.BaseURL)
+		log.Printf("Received %d deployments from %v", len(deployments), kc.BaseURL())
+		c.setDeployments(deployments)
 	}
 	time.Sleep(interval)
 	loopUpdateDeployments(c, kc, interval)

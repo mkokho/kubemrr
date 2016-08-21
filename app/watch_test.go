@@ -65,4 +65,8 @@ func TestRunWatch(t *testing.T) {
 	if kc.hitsGetDeployments < 2 {
 		t.Errorf("Not enough Getdeployments requests")
 	}
+
+	if c.deployments == nil {
+		t.Errorf("Deployments in the cache has not been updated")
+	}
 }
