@@ -15,7 +15,7 @@ type (
 	}
 )
 
-func NewWatchCommand() *cobra.Command {
+func NewWatchCommand(f Factory) *cobra.Command {
 	var watchCmd = &cobra.Command{
 		Use:   "watch [flags] [url]",
 		Short: "Starts a mirror of one Kubernetes API server",
@@ -23,7 +23,7 @@ func NewWatchCommand() *cobra.Command {
 Starts a mirror of one Kubernetes API server
 `,
 		Run: func(cmd *cobra.Command, args []string) {
-			RunWatch(cmd, args)
+			RunWatch(f, cmd, args)
 		},
 	}
 
@@ -31,9 +31,9 @@ Starts a mirror of one Kubernetes API server
 	return watchCmd
 }
 
-func RunWatch(cmd *cobra.Command, args []string) {
+func RunWatch(f Factory, cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
-		fmt.Printf("You must specify URL of Kubernetes API")
+		fmt.Fprintf(f.StdErr(), "You must specify URL of Kubernetes API")
 		return
 	}
 
@@ -41,40 +41,30 @@ func RunWatch(cmd *cobra.Command, args []string) {
 
 	l, err := net.Listen("tcp", bind)
 	if err != nil {
-		log.Fatalf("Kube Mirror failed to bind on %s: %v", bind, err)
+		fmt.Fprintf(f.StdErr(), "Kube Mirror failed to bind on %s: %v", bind, err)
+		return
 	}
 
-	url, err := parseArgs(args)
+	url, err := url.ParseRequestURI(args[0])
 	if err != nil {
-		log.Fatalf("Invalid arguments: %v", err)
+		fmt.Fprintf(f.StdErr(), "Could not parse [%s] as URL: %v", args[0], err)
+		return
 	}
 
 	log.Printf("Kube Mirror is listening on %s\n", bind)
 
-	c := NewMrrCache()
+	c := f.MrrCache()
 	kc := NewKubeClient()
 	kc.BaseURL = url
 	go loopUpdatePods(c, kc)
 	go loopUpdateServices(c, kc)
-	err = ServeMrrCache(l, c)
+	err = f.Serve(l, c)
 	if err != nil {
-		log.Fatalf("Kube Mirror encounered unexpected error: %v", err)
+		fmt.Fprintf(f.StdErr(), "Kube Mirror encounered unexpected error: %v", err)
+		return
 	}
 
 	log.Println("Kube Mirror has stopped")
-}
-
-func parseArgs(args []string) (*url.URL, error) {
-	if len(args) != 1 {
-		return nil, fmt.Errorf("Expected exactly one url as an argument")
-	}
-
-	url, err := url.Parse(args[0])
-	if err != nil {
-		return nil, fmt.Errorf("Could not parse %s: %s", args[0], err)
-	}
-
-	return url, nil
 }
 
 func loopUpdatePods(c *MrrCache, kc *KubeClient) {

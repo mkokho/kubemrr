@@ -29,7 +29,7 @@ var RootCmd = &cobra.Command{
 func init() {
 	f := &app.DefaultFactory{}
 	RootCmd.AddCommand(app.NewGetCommand(f))
-	RootCmd.AddCommand(app.NewWatchCommand())
+	RootCmd.AddCommand(app.NewWatchCommand(f))
 }
 
 func main() {

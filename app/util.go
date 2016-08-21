@@ -5,6 +5,9 @@ import (
 	"github.com/spf13/cobra"
 	"io"
 	"log"
+	"net"
+	"net/http"
+	"net/rpc"
 	"os"
 )
 
@@ -29,6 +32,8 @@ func GetBind(cmd *cobra.Command) string {
 
 type Factory interface {
 	MrrClient(bind string) (MrrClient, error)
+	MrrCache() *MrrCache
+	Serve(l net.Listener, c *MrrCache) error
 	StdOut() io.Writer
 	StdErr() io.Writer
 }
@@ -47,8 +52,19 @@ func (f *DefaultFactory) StdErr() io.Writer {
 	return os.Stderr
 }
 
+func (f *DefaultFactory) MrrCache() *MrrCache {
+	return NewMrrCache()
+}
+
+func (f *DefaultFactory) Serve(l net.Listener, cache *MrrCache) error {
+	rpc.Register(cache)
+	rpc.HandleHTTP()
+	return http.Serve(l, nil)
+}
+
 type TestFactory struct {
 	mrrClient MrrClient
+	mrrCache  MrrCache
 	stdOut    io.Writer
 	stdErr    io.Writer
 }
@@ -63,4 +79,12 @@ func (f *TestFactory) StdOut() io.Writer {
 
 func (f *TestFactory) StdErr() io.Writer {
 	return f.stdErr
+}
+
+func (f *TestFactory) MrrCache() *MrrCache {
+	return NewMrrCache()
+}
+
+func (f *TestFactory) Serve(l net.Listener, cache *MrrCache) error {
+	return nil
 }

@@ -31,6 +31,7 @@ func TestRunGetInvalidArgs(t *testing.T) {
 	cmd := NewGetCommand(f)
 
 	for i, test := range tests {
+		buf.Reset()
 		cmd.Run(cmd, test.args)
 		if buf.Len() == 0 {
 			t.Errorf("Test %d: nothing has been written to the error output, expected: %v", i, test.output)

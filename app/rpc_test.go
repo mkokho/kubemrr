@@ -3,6 +3,8 @@ package app
 import (
 	"log"
 	"net"
+	"net/http"
+	"net/rpc"
 	"reflect"
 	"sync"
 	"testing"
@@ -23,7 +25,9 @@ func setupRPC() {
 	cache = NewMrrCache()
 	cache.setPods([]Pod{Pod{ObjectMeta: ObjectMeta{Name: "pod1"}}})
 	cache.setServices([]Service{Service{ObjectMeta: ObjectMeta{Name: "service1"}}})
-	go ServeMrrCache(l, cache)
+	rpc.Register(cache)
+	rpc.HandleHTTP()
+	go http.Serve(l, nil)
 
 	mrrClient, err = NewMrrClient(l.Addr().String())
 	if err != nil {

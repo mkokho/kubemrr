@@ -1,18 +1,9 @@
 package app
 
-import ()
 import (
-	"net"
-	"net/http"
 	"net/rpc"
 	"sync"
 )
-
-func ServeMrrCache(l net.Listener, cache *MrrCache) error {
-	rpc.Register(cache)
-	rpc.HandleHTTP()
-	return http.Serve(l, nil)
-}
 
 type MrrCache struct {
 	pods     []Pod
