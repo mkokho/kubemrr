@@ -12,7 +12,7 @@ import (
 
 var (
 	cache     *MrrCache
-	mrrClient *MrrClientDefault
+	mrrClient MrrClient
 	once      sync.Once
 )
 
@@ -21,15 +21,15 @@ func setupRPC() {
 	if err != nil {
 		log.Fatalf("Failed to bind: %v", err)
 	}
-
-	cache = NewMrrCache()
+	f := &DefaultFactory{}
+	cache = f.MrrCache()
 	cache.setPods([]Pod{Pod{ObjectMeta: ObjectMeta{Name: "pod1"}}})
 	cache.setServices([]Service{Service{ObjectMeta: ObjectMeta{Name: "service1"}}})
 	rpc.Register(cache)
 	rpc.HandleHTTP()
 	go http.Serve(l, nil)
 
-	mrrClient, err = NewMrrClient(l.Addr().String())
+	mrrClient, err = f.MrrClient(l.Addr().String())
 	if err != nil {
 		log.Fatalf("Failed to create client: %v", err)
 	}
