@@ -27,11 +27,13 @@ Below is a guide for `bash` shell
 
 ## Bash
 
-- `cd tmp`
-- `kubectl completion bash > ./kubectl_completion`
-- `sed -i s/'kubectl get $(__kubectl_namespace_flag) -o template --template="${template}"'/'kubemrr get'/g kubectl_completion` 
-- `sudo mv kube_completion /etc/bash_completion.d/kubectl`
-- `source /etc/bash_completion.d/kubectl`
+```
+cd tmp
+kubectl completion bash > ./kubectl_completion
+sed -i s/'kubectl get $(__kubectl_namespace_flag) -o template --template="${template}"'/'kubemrr get'/g kubectl_completion
+sudo mv kube_completion /etc/bash_completion.d/kubectl
+source /etc/bash_completion.d/kubectl
+```
 
 To test it, start watching a server, and then type `kubectl get po [TAB][TAB]`
 
@@ -40,12 +42,14 @@ To test it, start watching a server, and then type `kubectl get po [TAB][TAB]`
 There is few more place to change in `/etc/bash_completion.d/kubectl` file. 
 Let's say your alias is `kus` and you keep mirror on port 33003:
 
-- `kubectl completion bash > ./kus`
-- `sed -i s/'kubectl get $(__kubectl_namespace_flag) -o template --template="${template}"'/'kubemrr -p $kubemrr_port get'/g kus`
-- `sed -i s/'local commands=("kubectl")'/'local commands=("kus")'/g kus`
-- `sed -i s/'_kubectl()'/'_kus()'/g kus`
-- `sed -i s/'local c=0'/'local c=0\n    local kubemrr_port=33003'/g kus`
-- `sed -i s/'__start_kubectl kubectl'/'__start_kus kus'/g kus`
+```
+kubectl completion bash > ./kus
+sed -i s/'kubectl get $(__kubectl_namespace_flag) -o template --template="${template}"'/'kubemrr -p $kubemrr_port get'/g kus
+sed -i s/'local commands=("kubectl")'/'local commands=("kus")'/g kus
+sed -i s/'_kubectl()'/'_kus()'/g kus
+sed -i s/'local c=0'/'local c=0\n    local kubemrr_port=33003'/g kus
+sed -i s/'__start_kubectl kubectl'/'__start_kus kus'/g kus
+```
 
 It is possible to create script for multiple aliases. However, it is easy to break things because 
 function name are mostly the same. Nevertheless, you can experiment. Just run the above commands on 
