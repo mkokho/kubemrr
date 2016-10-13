@@ -54,7 +54,7 @@ func TestRunWatch(t *testing.T) {
 		t.Errorf("Pods in the cache has not been updated")
 	}
 
-	if kc.hitsGetPods < 2 {
+	if kc.hitsGetServices < 2 {
 		t.Errorf("Not enough GetService requests")
 	}
 
