@@ -1,6 +1,7 @@
 package app
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -51,8 +52,8 @@ func TestGetPods(t *testing.T) {
 	}
 
 	want := []Pod{
-		Pod{ObjectMeta: ObjectMeta{Name: "pod1"}},
-		Pod{ObjectMeta: ObjectMeta{Name: "pod2"}},
+		{ObjectMeta: ObjectMeta{Name: "pod1"}},
+		{ObjectMeta: ObjectMeta{Name: "pod2"}},
 	}
 
 	if !reflect.DeepEqual(pods, want) {
@@ -81,8 +82,8 @@ func TestGetServices(t *testing.T) {
 	}
 
 	want := []Service{
-		Service{ObjectMeta: ObjectMeta{Name: "service1"}},
-		Service{ObjectMeta: ObjectMeta{Name: "service2"}},
+		{ObjectMeta: ObjectMeta{Name: "service1"}},
+		{ObjectMeta: ObjectMeta{Name: "service2"}},
 	}
 
 	if !reflect.DeepEqual(services, want) {
@@ -111,11 +112,63 @@ func TestGetDeployments(t *testing.T) {
 	}
 
 	want := []Deployment{
-		Deployment{ObjectMeta: ObjectMeta{Name: "deployment1"}},
-		Deployment{ObjectMeta: ObjectMeta{Name: "deployment2"}},
+		{ObjectMeta: ObjectMeta{Name: "deployment1"}},
+		{ObjectMeta: ObjectMeta{Name: "deployment2"}},
 	}
 
 	if !reflect.DeepEqual(svc, want) {
 		t.Errorf("GetDeployments returned %+v, want %+v", svc, want)
+	}
+}
+
+func stream(w http.ResponseWriter, items []interface{}) {
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		panic("need flusher!")
+	}
+
+	w.Header().Set("Transfer-Encoding", "chunked")
+	w.WriteHeader(http.StatusOK)
+	flusher.Flush()
+
+	for _, item := range items {
+		b, err := json.Marshal(item)
+		if err != nil {
+			panic(err)
+		}
+		_, err = w.Write(b)
+		if err != nil {
+			panic(err)
+		}
+		flusher.Flush()
+	}
+}
+
+func TestWatchPods(t *testing.T) {
+	events := []interface{}{
+		&PodEvent{Added, Pod{ObjectMeta: ObjectMeta{Name: "first"}}},
+		&PodEvent{Modified, Pod{ObjectMeta: ObjectMeta{Name: "second"}}},
+		&PodEvent{Deleted, Pod{ObjectMeta: ObjectMeta{Name: "last"}}},
+	}
+
+	setup()
+	defer teardown()
+	mux.HandleFunc("/api/v1/pods&watch=true", func(w http.ResponseWriter, r *http.Request) {
+		stream(w, events)
+	},
+	)
+
+	inEvents := make(chan *PodEvent, 10)
+	err := client.WatchPods(inEvents)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	for _, expectedEvent := range events {
+		actualEvent := <-inEvents
+
+		if !reflect.DeepEqual(expectedEvent, actualEvent) {
+			t.Errorf("Expected %v, received %v", expectedEvent, actualEvent)
+		}
 	}
 }

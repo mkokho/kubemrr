@@ -3,17 +3,32 @@ package app
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 )
 
+type EventType string
+
+const (
+	Added    EventType = "ADDED"
+	Modified EventType = "MODIFIED"
+	Deleted  EventType = "DELETED"
+)
+
+type PodEvent struct {
+	Type EventType
+	Pod  Pod
+}
+
 type KubeClient interface {
 	BaseURL() *url.URL
 	GetPods() ([]Pod, error)
 	GetServices() ([]Service, error)
 	GetDeployments() ([]Deployment, error)
+	WatchPods(out chan *PodEvent) error
 }
 
 type DefaultKubeClient struct {
@@ -46,6 +61,41 @@ func (kc *DefaultKubeClient) GetPods() ([]Pod, error) {
 	}
 
 	return podList.Items, nil
+}
+
+func (kc *DefaultKubeClient) WatchPods(out chan *PodEvent) error {
+	req, err := kc.newRequest("GET", "api/v1/pods&watch=true", nil)
+	if err != nil {
+		return err
+	}
+
+	res, err := kc.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("Failed to watch pods: %d", res.StatusCode)
+	}
+
+	d := json.NewDecoder(res.Body)
+
+	for {
+		var event PodEvent
+		err := d.Decode(&event)
+
+		if err == io.EOF {
+			return nil
+		}
+
+		if err != nil {
+			return fmt.Errorf("Could not decode data into pod event: %s", err)
+		}
+
+		out <- &event
+	}
+
+	return nil
 }
 
 func (kc *DefaultKubeClient) GetServices() ([]Service, error) {
@@ -142,15 +192,19 @@ func (kc *TestKubeClient) BaseURL() *url.URL {
 
 func (kc *TestKubeClient) GetPods() ([]Pod, error) {
 	kc.hitsGetPods += 1
-	return []Pod{Pod{ObjectMeta: ObjectMeta{Name: "pod1"}}}, nil
+	return []Pod{{ObjectMeta: ObjectMeta{Name: "pod1"}}}, nil
 }
 
 func (kc *TestKubeClient) GetServices() ([]Service, error) {
 	kc.hitsGetServices += 1
-	return []Service{Service{ObjectMeta: ObjectMeta{Name: "service1"}}}, nil
+	return []Service{{ObjectMeta: ObjectMeta{Name: "service1"}}}, nil
 }
 
 func (kc *TestKubeClient) GetDeployments() ([]Deployment, error) {
 	kc.hitsGetDeployments += 1
-	return []Deployment{Deployment{ObjectMeta: ObjectMeta{Name: "deployment1"}}}, nil
+	return []Deployment{{ObjectMeta: ObjectMeta{Name: "deployment1"}}}, nil
+}
+
+func (kc *TestKubeClient) WatchPods(out chan *PodEvent) error {
+	return nil
 }
