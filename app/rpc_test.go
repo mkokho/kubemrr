@@ -23,9 +23,9 @@ func setupRPC() {
 	}
 	f := &DefaultFactory{}
 	cache = f.MrrCache()
-	cache.setPods([]Pod{Pod{ObjectMeta: ObjectMeta{Name: "pod1"}}})
-	cache.setServices([]Service{Service{ObjectMeta: ObjectMeta{Name: "service1"}}})
-	cache.setDeployments([]Deployment{Deployment{ObjectMeta: ObjectMeta{Name: "deployment1"}}})
+	cache.setPods([]Pod{{ObjectMeta: ObjectMeta{Name: "pod1"}}})
+	cache.setServices([]Service{{ObjectMeta: ObjectMeta{Name: "service1"}}})
+	cache.setDeployments([]Deployment{{ObjectMeta: ObjectMeta{Name: "deployment1"}}})
 	rpc.Register(cache)
 	rpc.HandleHTTP()
 	go http.Serve(l, nil)
@@ -44,7 +44,7 @@ func TestClientPods(t *testing.T) {
 		t.Errorf("Unexpected error %v", err)
 	}
 
-	if !reflect.DeepEqual(result, cache.pods) {
+	if !reflect.DeepEqual(result[0], *cache.pods["pod1"]) {
 		t.Errorf("Expected pods %v, found %v", cache.pods, result)
 	}
 }
@@ -57,7 +57,7 @@ func TestClientServices(t *testing.T) {
 		t.Errorf("Unexpected error %v", err)
 	}
 
-	if !reflect.DeepEqual(result, cache.services) {
+	if !reflect.DeepEqual(result[0], *cache.services["service1"]) {
 		t.Errorf("Expected services %v, found %v", cache.services, result)
 	}
 }
@@ -70,7 +70,7 @@ func TestClientDeployments(t *testing.T) {
 		t.Errorf("Unexpected error %v", err)
 	}
 
-	if !reflect.DeepEqual(result, cache.deployments) {
+	if !reflect.DeepEqual(result[0], *cache.deployments["deployment1"]) {
 		t.Errorf("Expected deployments %v, found %v", cache.deployments, result)
 	}
 }

@@ -6,9 +6,9 @@ import (
 )
 
 type MrrCache struct {
-	pods        []Pod
-	services    []Service
-	deployments []Deployment
+	pods        map[string]*Pod
+	services    map[string]*Service
+	deployments map[string]*Deployment
 	mu          *sync.RWMutex
 }
 
@@ -22,7 +22,9 @@ func (c *MrrCache) Pods(f *Filter, pods *[]Pod) error {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	*pods = c.pods
+	for _, p := range c.pods {
+		*pods = append(*pods, *p)
+	}
 	return nil
 }
 
@@ -30,7 +32,9 @@ func (c *MrrCache) Services(f *Filter, services *[]Service) error {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	*services = c.services
+	for _, s := range c.services {
+		*services = append(*services, *s)
+	}
 	return nil
 }
 
@@ -38,26 +42,40 @@ func (c *MrrCache) Deployments(f *Filter, deployments *[]Deployment) error {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	*deployments = c.deployments
+	for _, d := range c.deployments {
+		*deployments = append(*deployments, *d)
+	}
 	return nil
 }
 
 func (c *MrrCache) setPods(pods []Pod) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.pods = pods
+
+	c.pods = map[string]*Pod{}
+	for _, p := range pods {
+		c.pods[p.Name] = &p
+	}
 }
 
 func (c *MrrCache) setServices(services []Service) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.services = services
+
+	c.services = map[string]*Service{}
+	for _, s := range services {
+		c.services[s.Name] = &s
+	}
 }
 
 func (c *MrrCache) setDeployments(deployments []Deployment) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.deployments = deployments
+
+	c.deployments = map[string]*Deployment{}
+	for _, d := range deployments {
+		c.deployments[d.Name] = &d
+	}
 }
 
 type MrrClient interface {
