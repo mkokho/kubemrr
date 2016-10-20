@@ -59,7 +59,7 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) {
 		return
 	}
 
-	log.Printf("Kube Mirror is listening on %s", bind)
+	log.Infof("Kube Mirror is listening on %s", bind)
 
 	c := f.MrrCache()
 	kc := f.KubeClient(url)
@@ -80,10 +80,10 @@ func loopWatchPods(c *MrrCache, kc KubeClient) {
 
 	watch := func() {
 		for {
-			log.Printf("Started to watch pods")
+			log.Infof("Started to watch pods")
 			err := kc.WatchPods(events)
 			if err != nil {
-				log.Printf("Disruption while watching pods: %s", err)
+				log.Infof("Disruption while watching pods: %s", err)
 			}
 		}
 	}
@@ -92,13 +92,14 @@ func loopWatchPods(c *MrrCache, kc KubeClient) {
 		for {
 			select {
 			case e := <-events:
-				log.Printf("Received event [%s] for pod [%s]", e.Type, e.Pod.Name)
+				log.Infof("Received event [%s] for pod [%s]", e.Type, e.Pod.Name)
 				switch e.Type {
 				case Deleted:
 					c.removePod(e.Pod)
 				case Added, Modified:
 					c.updatePod(e.Pod)
 				}
+				log.WithField("pods", c.pods).Debugf("Cached pods")
 			}
 		}
 	}
@@ -112,10 +113,10 @@ func loopWatchServices(c *MrrCache, kc KubeClient) {
 
 	watch := func() {
 		for {
-			log.Printf("Started to watch services")
+			log.Infof("Started to watch services")
 			err := kc.WatchServices(events)
 			if err != nil {
-				log.Printf("Disruption while watching services: %s", err)
+				log.Infof("Disruption while watching services: %s", err)
 			}
 		}
 	}
@@ -124,13 +125,14 @@ func loopWatchServices(c *MrrCache, kc KubeClient) {
 		for {
 			select {
 			case e := <-events:
-				log.Printf("Received event [%s] for service [%s]", e.Type, e.Service.Name)
+				log.Infof("Received event [%s] for service [%s]", e.Type, e.Service.Name)
 				switch e.Type {
 				case Deleted:
 					c.removeService(e.Service)
 				case Added, Modified:
 					c.updateService(e.Service)
 				}
+				log.WithField("services", c.services).Debugf("Cached services")
 			}
 		}
 	}
@@ -144,10 +146,10 @@ func loopWatchDeployments(c *MrrCache, kc KubeClient) {
 
 	watch := func() {
 		for {
-			log.Printf("Started to watch deployments")
+			log.Infof("Started to watch deployments")
 			err := kc.WatchDeployments(events)
 			if err != nil {
-				log.Printf("Disruption while watching services: %s", err)
+				log.Infof("Disruption while watching services: %s", err)
 			}
 		}
 	}
@@ -156,13 +158,14 @@ func loopWatchDeployments(c *MrrCache, kc KubeClient) {
 		for {
 			select {
 			case e := <-events:
-				log.Printf("Received event [%s] for deployment [%s]", e.Type, e.Deployment.Name)
+				log.Infof("Received event [%s] for deployment [%s]", e.Type, e.Deployment.Name)
 				switch e.Type {
 				case Deleted:
 					c.removeDeployment(e.Deployment)
 				case Added, Modified:
 					c.updateDeployment(e.Deployment)
 				}
+				log.WithField("deployments", c.deployments).Debugf("Cached deployments")
 			}
 		}
 	}
@@ -174,11 +177,11 @@ func loopWatchDeployments(c *MrrCache, kc KubeClient) {
 func loopUpdatePods(c *MrrCache, kc KubeClient, interval time.Duration) {
 	pods, err := kc.GetPods()
 	if err != nil {
-		log.Printf("Could not get pods from %v: %v", kc.BaseURL(), err)
+		log.Infof("Could not get pods from %v: %v", kc.BaseURL(), err)
 	}
 
 	if pods != nil {
-		log.Printf("Received %d pods from %v", len(pods), kc.BaseURL())
+		log.Infof("Received %d pods from %v", len(pods), kc.BaseURL())
 		c.setPods(pods)
 	}
 	time.Sleep(interval)
@@ -188,11 +191,11 @@ func loopUpdatePods(c *MrrCache, kc KubeClient, interval time.Duration) {
 func loopUpdateServices(c *MrrCache, kc KubeClient, interval time.Duration) {
 	services, err := kc.GetServices()
 	if err != nil {
-		log.Printf("Could not get services from %v: %v", kc.BaseURL(), err)
+		log.Infof("Could not get services from %v: %v", kc.BaseURL(), err)
 	}
 
 	if services != nil {
-		log.Printf("Received %d services from %v", len(services), kc.BaseURL())
+		log.Infof("Received %d services from %v", len(services), kc.BaseURL())
 		c.setServices(services)
 	}
 	time.Sleep(interval)
@@ -202,11 +205,11 @@ func loopUpdateServices(c *MrrCache, kc KubeClient, interval time.Duration) {
 func loopUpdateDeployments(c *MrrCache, kc KubeClient, interval time.Duration) {
 	deployments, err := kc.GetDeployments()
 	if err != nil {
-		log.Printf("Could not get deployments from %v: %v", kc.BaseURL(), err)
+		log.Infof("Could not get deployments from %v: %v", kc.BaseURL(), err)
 	}
 
 	if deployments != nil {
-		log.Printf("Received %d deployments from %v", len(deployments), kc.BaseURL())
+		log.Infof("Received %d deployments from %v", len(deployments), kc.BaseURL())
 		c.setDeployments(deployments)
 	}
 	time.Sleep(interval)
