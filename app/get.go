@@ -2,9 +2,9 @@ package app
 
 import (
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"io"
-	"log"
 	"regexp"
 	"strings"
 )
@@ -24,6 +24,7 @@ Currently it outputs only names separated by space.
 This is enought to make autocompletion works fast.
 		`,
 		Run: func(cmd *cobra.Command, args []string) {
+			RunCommon(cmd)
 			err := RunGet(f, cmd, args)
 			if err != nil {
 				log.Fatal(err)
@@ -86,6 +87,7 @@ func outputPods(client MrrClient, out io.Writer) error {
 	if err != nil {
 		return err
 	}
+	log.WithField("pods", pods).Debugf("Got pods")
 
 	for i, pod := range pods {
 		if i != 0 {
@@ -102,6 +104,7 @@ func outputServices(client MrrClient, out io.Writer) error {
 	if err != nil {
 		return err
 	}
+	log.WithField("services", services).Debugf("Got services")
 
 	for i, svc := range services {
 		if i != 0 {
@@ -118,6 +121,7 @@ func outputDeployments(client MrrClient, out io.Writer) error {
 	if err != nil {
 		return err
 	}
+	log.WithField("deployments", deployments).Debugf("Got deployments")
 
 	for i, deployment := range deployments {
 		if i != 0 {
