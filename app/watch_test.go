@@ -44,7 +44,6 @@ func TestRunWatch(t *testing.T) {
 	f := &TestFactory{kubeClient: kc, mrrCache: c}
 	cmd := NewWatchCommand(f)
 	cmd.Flags().Set("port", "0")
-	cmd.Flags().Set("interval", "4ms")
 	go cmd.Run(cmd, []string{"http://k8s-server.example.org"})
 
 	time.Sleep(10 * time.Millisecond)

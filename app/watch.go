@@ -29,7 +29,6 @@ Starts a mirror of one Kubernetes API server
 	}
 
 	AddCommonFlags(watchCmd)
-	watchCmd.Flags().Duration("interval", 500*time.Millisecond, "Interval between requests to the server")
 	return watchCmd
 }
 
@@ -38,13 +37,6 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) {
 		fmt.Fprintf(f.StdErr(), "You must specify URL of Kubernetes API")
 		return
 	}
-
-	//TODO remove unused interval flag
-	/*	interval, err := cmd.Flags().GetDuration("interval")
-		if err != nil {
-			fmt.Fprintf(f.StdErr(), "Could not parse value of --interval")
-			return
-		}*/
 
 	bind := GetBind(cmd)
 
