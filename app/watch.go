@@ -2,8 +2,8 @@ package app
 
 import (
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"log"
 	"net"
 	"net/url"
 	"time"
@@ -59,7 +59,7 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) {
 		return
 	}
 
-	log.Printf("Kube Mirror is listening on %s\n", bind)
+	log.Printf("Kube Mirror is listening on %s", bind)
 
 	c := f.MrrCache()
 	kc := f.KubeClient(url)
@@ -92,7 +92,7 @@ func loopWatchPods(c *MrrCache, kc KubeClient) {
 		for {
 			select {
 			case e := <-events:
-				log.Printf("Received event [%s] for pod [%s]\n", e.Type, e.Pod.Name)
+				log.Printf("Received event [%s] for pod [%s]", e.Type, e.Pod.Name)
 				switch e.Type {
 				case Deleted:
 					c.removePod(e.Pod)
@@ -124,7 +124,7 @@ func loopWatchServices(c *MrrCache, kc KubeClient) {
 		for {
 			select {
 			case e := <-events:
-				log.Printf("Received event [%s] for service [%s]\n", e.Type, e.Service.Name)
+				log.Printf("Received event [%s] for service [%s]", e.Type, e.Service.Name)
 				switch e.Type {
 				case Deleted:
 					c.removeService(e.Service)
@@ -156,7 +156,7 @@ func loopWatchDeployments(c *MrrCache, kc KubeClient) {
 		for {
 			select {
 			case e := <-events:
-				log.Printf("Received event [%s] for deployment [%s]\n", e.Type, e.Deployment.Name)
+				log.Printf("Received event [%s] for deployment [%s]", e.Type, e.Deployment.Name)
 				switch e.Type {
 				case Deleted:
 					c.removeDeployment(e.Deployment)
