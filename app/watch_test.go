@@ -94,14 +94,18 @@ func TestLoopWatchPods(t *testing.T) {
 		{Added, &Pod{ObjectMeta: ObjectMeta{Name: "pod1"}}},
 		{Modified, &Pod{ObjectMeta: ObjectMeta{Name: "pod1", ResourceVersion: "v2"}}},
 		{Deleted, &Pod{ObjectMeta: ObjectMeta{Name: "pod0"}}},
+		{Added, &Pod{ObjectMeta: ObjectMeta{Name: "pod2"}}},
 	}
 
 	loopWatchPods(c, kc)
 	time.Sleep(10 * time.Millisecond)
 
-	expected := *kc.podEvents[2].Pod
-	if !reflect.DeepEqual(*c.pods["pod1"], expected) {
-		t.Errorf("Cache version %v is not equal to expected %v", c.pods["pod1"], expected)
+	for _, i := range []int{2, 4} {
+		expected := *kc.podEvents[i].Pod
+		actual := *c.pods[expected.Name]
+		if !reflect.DeepEqual(actual, expected) {
+			t.Errorf("Cache version %v is not equal to expected %v", actual, expected)
+		}
 	}
 
 	if _, ok := c.pods["pod0"]; ok {
