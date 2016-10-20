@@ -226,7 +226,8 @@ type TestKubeClient struct {
 	hitsGetServices    int
 	hitsGetDeployments int
 
-	podEvents []*PodEvent
+	podEvents     []*PodEvent
+	serviceEvents []*ServiceEvent
 
 	hits   map[string]int
 	errors map[string]error
@@ -277,6 +278,9 @@ func (kc *TestKubeClient) WatchServices(out chan *ServiceEvent) error {
 		return kc.errors["ServiceEvent"]
 	}
 
+	for i := range kc.serviceEvents {
+		out <- kc.serviceEvents[i]
+	}
 	for {
 	}
 }

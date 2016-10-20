@@ -108,3 +108,26 @@ func TestLoopWatchPods(t *testing.T) {
 		t.Errorf("Pod [%s] should have been deleted", "pod2")
 	}
 }
+
+func TestLoopWatchServices(t *testing.T) {
+	c := NewMrrCache()
+	kc := NewTestKubeClient()
+	kc.serviceEvents = []*ServiceEvent{
+		{Added, &Service{ObjectMeta: ObjectMeta{Name: "service0"}}},
+		{Added, &Service{ObjectMeta: ObjectMeta{Name: "service1"}}},
+		{Modified, &Service{ObjectMeta: ObjectMeta{Name: "service1", ResourceVersion: "v2"}}},
+		{Deleted, &Service{ObjectMeta: ObjectMeta{Name: "service0"}}},
+	}
+
+	loopWatchServices(c, kc)
+	time.Sleep(10 * time.Millisecond)
+
+	expected := *kc.serviceEvents[2].Service
+	if !reflect.DeepEqual(*c.services["service1"], expected) {
+		t.Errorf("Cache version %v is not equal to expected %v", c.services["service1"], expected)
+	}
+
+	if _, ok := c.services["service2"]; ok {
+		t.Errorf("Pod [%s] should have been deleted", "pod2")
+	}
+}

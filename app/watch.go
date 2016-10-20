@@ -106,6 +106,38 @@ func loopWatchPods(c *MrrCache, kc KubeClient) {
 	go update()
 }
 
+func loopWatchServices(c *MrrCache, kc KubeClient) {
+	events := make(chan *ServiceEvent)
+
+	watch := func() {
+		for {
+			log.Printf("Started to watch services")
+			err := kc.WatchServices(events)
+			if err != nil {
+				log.Printf("Disruption while watching services: %s", err)
+			}
+		}
+	}
+
+	update := func() {
+		for {
+			select {
+			case e := <-events:
+				log.Printf("Received event [%s] for service [%s]\n", e.Type, e.Service.Name)
+				switch e.Type {
+				case Deleted:
+					c.removeService(e.Service)
+				case Added, Modified:
+					c.updateservice(e.Service)
+				}
+			}
+		}
+	}
+
+	go watch()
+	go update()
+}
+
 func loopUpdatePods(c *MrrCache, kc KubeClient, interval time.Duration) {
 	pods, err := kc.GetPods()
 	if err != nil {

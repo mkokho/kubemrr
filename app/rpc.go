@@ -75,6 +75,20 @@ func (c *MrrCache) removePod(pod *Pod) {
 	delete(c.pods, pod.ObjectMeta.Name)
 }
 
+func (c *MrrCache) updateservice(s *Service) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.services[s.ObjectMeta.Name] = s
+}
+
+func (c *MrrCache) removeService(s *Service) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	delete(c.pods, s.ObjectMeta.Name)
+}
+
 func (c *MrrCache) setServices(services []Service) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
