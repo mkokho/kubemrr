@@ -23,6 +23,7 @@ func NewWatchCommand(f Factory) *cobra.Command {
 Starts a mirror of one Kubernetes API server
 `,
 		Run: func(cmd *cobra.Command, args []string) {
+			RunCommon(cmd)
 			RunWatch(f, cmd, args)
 		},
 	}

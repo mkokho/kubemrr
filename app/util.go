@@ -2,9 +2,9 @@ package app
 
 import (
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"net/rpc"
@@ -15,6 +15,16 @@ import (
 func AddCommonFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("address", "a", "127.0.0.1", "The IP address where mirror is accessible")
 	cmd.Flags().IntP("port", "p", 33033, "The port on which mirror is accessible")
+	cmd.Flags().BoolP("verbose", "v", false, "Enables verbose output")
+}
+
+func RunCommon(cmd *cobra.Command) {
+	isVerbose, err := cmd.Flags().GetBool("verbose")
+	if err != nil {
+		log.Fatal(err)
+	} else if isVerbose {
+		enableDebug()
+	}
 }
 
 func GetBind(cmd *cobra.Command) string {
