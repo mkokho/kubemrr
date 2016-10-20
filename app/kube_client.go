@@ -267,8 +267,9 @@ type TestKubeClient struct {
 	hitsGetServices    int
 	hitsGetDeployments int
 
-	podEvents     []*PodEvent
-	serviceEvents []*ServiceEvent
+	podEvents        []*PodEvent
+	serviceEvents    []*ServiceEvent
+	deploymentEvents []*DeploymentEvent
 
 	hits   map[string]int
 	errors map[string]error
@@ -327,5 +328,14 @@ func (kc *TestKubeClient) WatchServices(out chan *ServiceEvent) error {
 }
 
 func (kc *TestKubeClient) WatchDeployments(out chan *DeploymentEvent) error {
-	return nil
+	kc.hits["WatchDeployments"] += 1
+	if kc.hits["WatchDeployments"] < 5 && kc.errors["WatchDeployments"] != nil {
+		return kc.errors["WatchDeployments"]
+	}
+
+	for i := range kc.deploymentEvents {
+		out <- kc.deploymentEvents[i]
+	}
+	for {
+	}
 }

@@ -104,8 +104,8 @@ func TestLoopWatchPods(t *testing.T) {
 		t.Errorf("Cache version %v is not equal to expected %v", c.pods["pod1"], expected)
 	}
 
-	if _, ok := c.pods["pod2"]; ok {
-		t.Errorf("Pod [%s] should have been deleted", "pod2")
+	if _, ok := c.pods["pod0"]; ok {
+		t.Errorf("Pod [%s] should have been deleted", "pod0")
 	}
 }
 
@@ -140,7 +140,43 @@ func TestLoopWatchServices(t *testing.T) {
 		t.Errorf("Cache version %v is not equal to expected %v", c.services["service1"], expected)
 	}
 
-	if _, ok := c.services["service2"]; ok {
-		t.Errorf("Pod [%s] should have been deleted", "pod2")
+	if _, ok := c.services["service0"]; ok {
+		t.Errorf("Pod [%s] should have been deleted", "service0")
+	}
+}
+
+func TestLoopWatchDeploymentsFailure(t *testing.T) {
+	c := NewMrrCache()
+	kc := NewTestKubeClient()
+	kc.errors["WatchDeployments"] = errors.New("Test Error")
+
+	loopWatchDeployments(c, kc)
+
+	time.Sleep(10 * time.Millisecond)
+	if kc.hits["WatchDeployments"] < 2 {
+		t.Errorf("Not enough WatchDeployments calls")
+	}
+}
+
+func TestLoopWatchDeployments(t *testing.T) {
+	c := NewMrrCache()
+	kc := NewTestKubeClient()
+	kc.deploymentEvents = []*DeploymentEvent{
+		{Added, &Deployment{ObjectMeta: ObjectMeta{Name: "deployment0"}}},
+		{Added, &Deployment{ObjectMeta: ObjectMeta{Name: "deployment1"}}},
+		{Modified, &Deployment{ObjectMeta: ObjectMeta{Name: "deployment1", ResourceVersion: "v2"}}},
+		{Deleted, &Deployment{ObjectMeta: ObjectMeta{Name: "deployment0"}}},
+	}
+
+	loopWatchDeployments(c, kc)
+	time.Sleep(10 * time.Millisecond)
+
+	expected := *kc.deploymentEvents[2].Deployment
+	if !reflect.DeepEqual(*c.deployments["deployment1"], expected) {
+		t.Errorf("Cache version %v is not equal to expected %v", c.deployments["deployment1"], expected)
+	}
+
+	if _, ok := c.deployments["deployment0"]; ok {
+		t.Errorf("Pod [%s] should have been deleted", "deployment0")
 	}
 }

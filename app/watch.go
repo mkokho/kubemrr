@@ -128,7 +128,39 @@ func loopWatchServices(c *MrrCache, kc KubeClient) {
 				case Deleted:
 					c.removeService(e.Service)
 				case Added, Modified:
-					c.updateservice(e.Service)
+					c.updateService(e.Service)
+				}
+			}
+		}
+	}
+
+	go watch()
+	go update()
+}
+
+func loopWatchDeployments(c *MrrCache, kc KubeClient) {
+	events := make(chan *DeploymentEvent)
+
+	watch := func() {
+		for {
+			log.Printf("Started to watch deployments")
+			err := kc.WatchDeployments(events)
+			if err != nil {
+				log.Printf("Disruption while watching services: %s", err)
+			}
+		}
+	}
+
+	update := func() {
+		for {
+			select {
+			case e := <-events:
+				log.Printf("Received event [%s] for deployment [%s]\n", e.Type, e.Deployment.Name)
+				switch e.Type {
+				case Deleted:
+					c.removeDeployment(e.Deployment)
+				case Added, Modified:
+					c.updateDeployment(e.Deployment)
 				}
 			}
 		}

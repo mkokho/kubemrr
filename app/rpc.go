@@ -75,7 +75,7 @@ func (c *MrrCache) removePod(pod *Pod) {
 	delete(c.pods, pod.ObjectMeta.Name)
 }
 
-func (c *MrrCache) updateservice(s *Service) {
+func (c *MrrCache) updateService(s *Service) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -86,7 +86,21 @@ func (c *MrrCache) removeService(s *Service) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	delete(c.pods, s.ObjectMeta.Name)
+	delete(c.services, s.ObjectMeta.Name)
+}
+
+func (c *MrrCache) updateDeployment(d *Deployment) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.deployments[d.ObjectMeta.Name] = d
+}
+
+func (c *MrrCache) removeDeployment(d *Deployment) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	delete(c.deployments, d.ObjectMeta.Name)
 }
 
 func (c *MrrCache) setServices(services []Service) {
