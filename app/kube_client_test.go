@@ -174,3 +174,39 @@ func TestWatchPods(t *testing.T) {
 		}
 	}
 }
+
+func TestWatchServices(t *testing.T) {
+	events := []interface{}{
+		&ServiceEvent{Added, &Service{ObjectMeta: ObjectMeta{Name: "first"}}},
+		&ServiceEvent{Modified, &Service{ObjectMeta: ObjectMeta{Name: "second"}}},
+		&ServiceEvent{Deleted, &Service{ObjectMeta: ObjectMeta{Name: "last"}}},
+	}
+
+	setup()
+	defer teardown()
+	mux.HandleFunc("/api/v1/services", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Query().Get("watch") != "true" {
+			t.Errorf("URL must have parameter `?watch=true`")
+		}
+		stream(w, []string{
+			`{"type": "ADDED", "object": {"metadata": {"name": "first"}}}`,
+			`{"type": "MODIFIED", "object": {"metadata": {"name": "second"}}}`,
+			`{"type": "DELETED", "object": {"metadata": {"name": "last"}}}`,
+		})
+	},
+	)
+
+	inEvents := make(chan *ServiceEvent, 10)
+	err := client.WatchServices(inEvents)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	for _, expectedEvent := range events {
+		actualEvent := <-inEvents
+
+		if !reflect.DeepEqual(expectedEvent, actualEvent) {
+			t.Errorf("Expected %v, received %v", expectedEvent, actualEvent)
+		}
+	}
+}

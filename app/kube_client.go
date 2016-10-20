@@ -23,12 +23,18 @@ type PodEvent struct {
 	Pod  *Pod      `json:"object"`
 }
 
+type ServiceEvent struct {
+	Type    EventType `json:"type"`
+	Service *Service  `json:"object"`
+}
+
 type KubeClient interface {
 	BaseURL() *url.URL
 	GetPods() ([]Pod, error)
 	GetServices() ([]Service, error)
 	GetDeployments() ([]Deployment, error)
 	WatchPods(out chan *PodEvent) error
+	WatchServices(out chan *ServiceEvent) error
 }
 
 type DefaultKubeClient struct {
@@ -82,6 +88,41 @@ func (kc *DefaultKubeClient) WatchPods(out chan *PodEvent) error {
 
 	for {
 		var event PodEvent
+		err := d.Decode(&event)
+
+		if err == io.EOF {
+			return nil
+		}
+
+		if err != nil {
+			return fmt.Errorf("Could not decode data into pod event: %s", err)
+		}
+
+		out <- &event
+	}
+
+	return nil
+}
+
+func (kc *DefaultKubeClient) WatchServices(out chan *ServiceEvent) error {
+	req, err := kc.newRequest("GET", "api/v1/services?watch=true", nil)
+	if err != nil {
+		return err
+	}
+
+	res, err := kc.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("Failed to watch pods: %d", res.StatusCode)
+	}
+
+	d := json.NewDecoder(res.Body)
+
+	for {
+		var event ServiceEvent
 		err := d.Decode(&event)
 
 		if err == io.EOF {
@@ -226,6 +267,16 @@ func (kc *TestKubeClient) WatchPods(out chan *PodEvent) error {
 	for i := range kc.podEvents {
 		out <- kc.podEvents[i]
 	}
+	for {
+	}
+}
+
+func (kc *TestKubeClient) WatchServices(out chan *ServiceEvent) error {
+	kc.hits["ServiceEvent"] += 1
+	if kc.hits["ServiceEvent"] < 5 && kc.errors["ServiceEvent"] != nil {
+		return kc.errors["ServiceEvent"]
+	}
+
 	for {
 	}
 }
