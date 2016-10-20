@@ -1,7 +1,6 @@
 package app
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -121,7 +120,7 @@ func TestGetDeployments(t *testing.T) {
 	}
 }
 
-func stream(w http.ResponseWriter, items []interface{}) {
+func stream(w http.ResponseWriter, items []string) {
 	flusher, ok := w.(http.Flusher)
 	if !ok {
 		panic("need flusher!")
@@ -132,11 +131,7 @@ func stream(w http.ResponseWriter, items []interface{}) {
 	flusher.Flush()
 
 	for _, item := range items {
-		b, err := json.Marshal(item)
-		if err != nil {
-			panic(err)
-		}
-		_, err = w.Write(b)
+		_, err := w.Write([]byte(item))
 		if err != nil {
 			panic(err)
 		}
@@ -146,15 +141,22 @@ func stream(w http.ResponseWriter, items []interface{}) {
 
 func TestWatchPods(t *testing.T) {
 	events := []interface{}{
-		&PodEvent{Added, Pod{ObjectMeta: ObjectMeta{Name: "first"}}},
-		&PodEvent{Modified, Pod{ObjectMeta: ObjectMeta{Name: "second"}}},
-		&PodEvent{Deleted, Pod{ObjectMeta: ObjectMeta{Name: "last"}}},
+		&PodEvent{Added, &Pod{ObjectMeta: ObjectMeta{Name: "first"}}},
+		&PodEvent{Modified, &Pod{ObjectMeta: ObjectMeta{Name: "second"}}},
+		&PodEvent{Deleted, &Pod{ObjectMeta: ObjectMeta{Name: "last"}}},
 	}
 
 	setup()
 	defer teardown()
-	mux.HandleFunc("/api/v1/pods&watch=true", func(w http.ResponseWriter, r *http.Request) {
-		stream(w, events)
+	mux.HandleFunc("/api/v1/pods", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Query().Get("watch") != "true" {
+			t.Errorf("URL must have parameter `?watch=true`")
+		}
+		stream(w, []string{
+			`{"type": "ADDED", "object": {"metadata": {"name": "first"}}}`,
+			`{"type": "MODIFIED", "object": {"metadata": {"name": "second"}}}`,
+			`{"type": "DELETED", "object": {"metadata": {"name": "last"}}}`,
+		})
 	},
 	)
 

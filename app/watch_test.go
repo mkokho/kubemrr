@@ -38,8 +38,8 @@ func TestRunWatchInvalidArgs(t *testing.T) {
 }
 
 func TestRunWatch(t *testing.T) {
-	url, _ := url.Parse("test-url")
-	kc := &TestKubeClient{baseURL: url}
+	kc := NewTestKubeClient()
+	kc.baseURL, _ = url.Parse("test-url")
 	c := NewMrrCache()
 	f := &TestFactory{kubeClient: kc, mrrCache: c}
 	cmd := NewWatchCommand(f)
@@ -48,8 +48,8 @@ func TestRunWatch(t *testing.T) {
 	go cmd.Run(cmd, []string{"http://k8s-server.example.org"})
 
 	time.Sleep(10 * time.Millisecond)
-	if kc.hitsGetPods < 2 {
-		t.Errorf("Not enough GetPods requests")
+	if kc.hits["WatchPods"] < 1 {
+		t.Errorf("Not enough WatchPods requests")
 	}
 
 	if c.pods == nil {
@@ -90,16 +90,16 @@ func TestLoopWatchPods(t *testing.T) {
 	c := NewMrrCache()
 	kc := NewTestKubeClient()
 	kc.podEvents = []*PodEvent{
-		{Added, Pod{ObjectMeta: ObjectMeta{Name: "pod0"}}},
-		{Added, Pod{ObjectMeta: ObjectMeta{Name: "pod1"}}},
-		{Modified, Pod{ObjectMeta: ObjectMeta{Name: "pod1", ResourceVersion: "v2"}}},
-		{Deleted, Pod{ObjectMeta: ObjectMeta{Name: "pod0"}}},
+		{Added, &Pod{ObjectMeta: ObjectMeta{Name: "pod0"}}},
+		{Added, &Pod{ObjectMeta: ObjectMeta{Name: "pod1"}}},
+		{Modified, &Pod{ObjectMeta: ObjectMeta{Name: "pod1", ResourceVersion: "v2"}}},
+		{Deleted, &Pod{ObjectMeta: ObjectMeta{Name: "pod0"}}},
 	}
 
 	loopWatchPods(c, kc)
 	time.Sleep(10 * time.Millisecond)
 
-	expected := kc.podEvents[2].Pod
+	expected := *kc.podEvents[2].Pod
 	if !reflect.DeepEqual(*c.pods["pod1"], expected) {
 		t.Errorf("Cache version %v is not equal to expected %v", c.pods["pod1"], expected)
 	}

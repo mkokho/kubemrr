@@ -62,7 +62,7 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) {
 
 	c := f.MrrCache()
 	kc := f.KubeClient(url)
-	go loopUpdatePods(c, kc, interval)
+	loopWatchPods(c, kc)
 	go loopUpdateServices(c, kc, interval)
 	go loopUpdateDeployments(c, kc, interval)
 	err = f.Serve(l, c)
@@ -94,9 +94,9 @@ func loopWatchPods(c *MrrCache, kc KubeClient) {
 				log.Printf("Received event [%s] for pod [%s]\n", e.Type, e.Pod.Name)
 				switch e.Type {
 				case Deleted:
-					c.removePod(&e.Pod)
+					c.removePod(e.Pod)
 				case Added, Modified:
-					c.updatePod(&e.Pod)
+					c.updatePod(e.Pod)
 				}
 			}
 		}

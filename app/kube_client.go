@@ -19,8 +19,8 @@ const (
 )
 
 type PodEvent struct {
-	Type EventType
-	Pod  Pod
+	Type EventType `json:"type"`
+	Pod  *Pod      `json:"object"`
 }
 
 type KubeClient interface {
@@ -64,7 +64,7 @@ func (kc *DefaultKubeClient) GetPods() ([]Pod, error) {
 }
 
 func (kc *DefaultKubeClient) WatchPods(out chan *PodEvent) error {
-	req, err := kc.newRequest("GET", "api/v1/pods&watch=true", nil)
+	req, err := kc.newRequest("GET", "api/v1/pods?watch=true", nil)
 	if err != nil {
 		return err
 	}
