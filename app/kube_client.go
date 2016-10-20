@@ -146,7 +146,7 @@ func (kc *DefaultKubeClient) WatchServices(out chan *ServiceEvent) error {
 }
 
 func (kc *DefaultKubeClient) WatchDeployments(out chan *DeploymentEvent) error {
-	req, err := kc.newRequest("GET", "api/v1/deployments?watch=true", nil)
+	req, err := kc.newRequest("GET", "/apis/extensions/v1beta1/deployments?watch=true", nil)
 	if err != nil {
 		return err
 	}

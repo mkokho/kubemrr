@@ -220,7 +220,7 @@ func TestWatchDeployments(t *testing.T) {
 
 	setup()
 	defer teardown()
-	mux.HandleFunc("/api/v1/deployments", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/apis/extensions/v1beta1/deployments", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Query().Get("watch") != "true" {
 			t.Errorf("URL must have parameter `?watch=true`")
 		}
