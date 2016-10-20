@@ -38,11 +38,12 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) {
 		return
 	}
 
-	interval, err := cmd.Flags().GetDuration("interval")
-	if err != nil {
-		fmt.Fprintf(f.StdErr(), "Could not parse value of --interval")
-		return
-	}
+	//TODO remove unused interval flag
+	/*	interval, err := cmd.Flags().GetDuration("interval")
+		if err != nil {
+			fmt.Fprintf(f.StdErr(), "Could not parse value of --interval")
+			return
+		}*/
 
 	bind := GetBind(cmd)
 
@@ -64,7 +65,7 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) {
 	kc := f.KubeClient(url)
 	loopWatchPods(c, kc)
 	loopWatchServices(c, kc)
-	go loopUpdateDeployments(c, kc, interval)
+	loopWatchDeployments(c, kc)
 	err = f.Serve(l, c)
 	if err != nil {
 		fmt.Fprintf(f.StdErr(), "Kube Mirror encounered unexpected error: %v", err)
