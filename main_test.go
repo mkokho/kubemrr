@@ -10,8 +10,6 @@ import (
 	"time"
 )
 
-const ()
-
 var (
 	k8sServer  *httptest.Server
 	k8sAddress string
@@ -19,14 +17,14 @@ var (
 )
 
 func k8sPods(w http.ResponseWriter, r *http.Request) {
-	io.WriteString(w, `{"items": [ {"metadata":{"name":"pod1"}} ]}`)
+	io.WriteString(w, `{"type": "ADDED", "object": {"metadata": {"name": "pod1"}}}`)
 }
 
 func k8sServices(w http.ResponseWriter, r *http.Request) {
-	io.WriteString(w, `{"items": [ {"metadata":{"name":"service1"}} ]}`)
+	io.WriteString(w, `{"type": "ADDED", "object": {"metadata": {"name": "service1"}}}`)
 }
 func k8sDeployments(w http.ResponseWriter, r *http.Request) {
-	io.WriteString(w, `{"items": [ {"metadata":{"name":"deployment1"}} ]}`)
+	io.WriteString(w, `{"type": "ADDED", "object": {"metadata": {"name": "deployment1"}}}`)
 }
 
 func startKubernetesServer() {
@@ -53,7 +51,7 @@ func TestCommands(t *testing.T) {
 	watchCmd := app.NewWatchCommand(f)
 	go watchCmd.Run(watchCmd, []string{k8sAddress})
 
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(1 * time.Millisecond)
 
 	tests := []struct {
 		arg    string
