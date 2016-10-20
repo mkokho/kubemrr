@@ -310,8 +310,7 @@ func (kc *TestKubeClient) WatchPods(out chan *PodEvent) error {
 	for i := range kc.podEvents {
 		out <- kc.podEvents[i]
 	}
-	for {
-	}
+	select {}
 }
 
 func (kc *TestKubeClient) WatchServices(out chan *ServiceEvent) error {
@@ -323,8 +322,7 @@ func (kc *TestKubeClient) WatchServices(out chan *ServiceEvent) error {
 	for i := range kc.serviceEvents {
 		out <- kc.serviceEvents[i]
 	}
-	for {
-	}
+	select {}
 }
 
 func (kc *TestKubeClient) WatchDeployments(out chan *DeploymentEvent) error {
@@ -336,6 +334,5 @@ func (kc *TestKubeClient) WatchDeployments(out chan *DeploymentEvent) error {
 	for i := range kc.deploymentEvents {
 		out <- kc.deploymentEvents[i]
 	}
-	for {
-	}
+	select {}
 }
