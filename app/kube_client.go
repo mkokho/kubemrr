@@ -28,6 +28,11 @@ type ServiceEvent struct {
 	Service *Service  `json:"object"`
 }
 
+type DeploymentEvent struct {
+	Type       EventType   `json:"type"`
+	Deployment *Deployment `json:"object"`
+}
+
 type KubeClient interface {
 	BaseURL() *url.URL
 	GetPods() ([]Pod, error)
@@ -35,6 +40,7 @@ type KubeClient interface {
 	GetDeployments() ([]Deployment, error)
 	WatchPods(out chan *PodEvent) error
 	WatchServices(out chan *ServiceEvent) error
+	WatchDeployments(out chan *DeploymentEvent) error
 }
 
 type DefaultKubeClient struct {
@@ -116,7 +122,7 @@ func (kc *DefaultKubeClient) WatchServices(out chan *ServiceEvent) error {
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("Failed to watch pods: %d", res.StatusCode)
+		return fmt.Errorf("Failed to watch services: %d", res.StatusCode)
 	}
 
 	d := json.NewDecoder(res.Body)
@@ -130,7 +136,42 @@ func (kc *DefaultKubeClient) WatchServices(out chan *ServiceEvent) error {
 		}
 
 		if err != nil {
-			return fmt.Errorf("Could not decode data into pod event: %s", err)
+			return fmt.Errorf("Could not decode data into service event: %s", err)
+		}
+
+		out <- &event
+	}
+
+	return nil
+}
+
+func (kc *DefaultKubeClient) WatchDeployments(out chan *DeploymentEvent) error {
+	req, err := kc.newRequest("GET", "api/v1/deployments?watch=true", nil)
+	if err != nil {
+		return err
+	}
+
+	res, err := kc.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("Failed to watch deployments: %d", res.StatusCode)
+	}
+
+	d := json.NewDecoder(res.Body)
+
+	for {
+		var event DeploymentEvent
+		err := d.Decode(&event)
+
+		if err == io.EOF {
+			return nil
+		}
+
+		if err != nil {
+			return fmt.Errorf("Could not decode data into deployment event: %s", err)
 		}
 
 		out <- &event
@@ -283,4 +324,8 @@ func (kc *TestKubeClient) WatchServices(out chan *ServiceEvent) error {
 	}
 	for {
 	}
+}
+
+func (kc *TestKubeClient) WatchDeployments(out chan *DeploymentEvent) error {
+	return nil
 }

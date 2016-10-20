@@ -210,3 +210,39 @@ func TestWatchServices(t *testing.T) {
 		}
 	}
 }
+
+func TestWatchDeployments(t *testing.T) {
+	events := []interface{}{
+		&DeploymentEvent{Added, &Deployment{ObjectMeta: ObjectMeta{Name: "first"}}},
+		&DeploymentEvent{Modified, &Deployment{ObjectMeta: ObjectMeta{Name: "second"}}},
+		&DeploymentEvent{Deleted, &Deployment{ObjectMeta: ObjectMeta{Name: "last"}}},
+	}
+
+	setup()
+	defer teardown()
+	mux.HandleFunc("/api/v1/deployments", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Query().Get("watch") != "true" {
+			t.Errorf("URL must have parameter `?watch=true`")
+		}
+		stream(w, []string{
+			`{"type": "ADDED", "object": {"metadata": {"name": "first"}}}`,
+			`{"type": "MODIFIED", "object": {"metadata": {"name": "second"}}}`,
+			`{"type": "DELETED", "object": {"metadata": {"name": "last"}}}`,
+		})
+	},
+	)
+
+	inEvents := make(chan *DeploymentEvent, 10)
+	err := client.WatchDeployments(inEvents)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	for _, expectedEvent := range events {
+		actualEvent := <-inEvents
+
+		if !reflect.DeepEqual(expectedEvent, actualEvent) {
+			t.Errorf("Expected %v, received %v", expectedEvent, actualEvent)
+		}
+	}
+}
