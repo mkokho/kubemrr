@@ -63,7 +63,7 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) {
 	c := f.MrrCache()
 	kc := f.KubeClient(url)
 	loopWatchPods(c, kc)
-	go loopUpdateServices(c, kc, interval)
+	loopWatchServices(c, kc)
 	go loopUpdateDeployments(c, kc, interval)
 	err = f.Serve(l, c)
 	if err != nil {

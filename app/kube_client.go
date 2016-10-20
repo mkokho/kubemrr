@@ -273,9 +273,9 @@ func (kc *TestKubeClient) WatchPods(out chan *PodEvent) error {
 }
 
 func (kc *TestKubeClient) WatchServices(out chan *ServiceEvent) error {
-	kc.hits["ServiceEvent"] += 1
-	if kc.hits["ServiceEvent"] < 5 && kc.errors["ServiceEvent"] != nil {
-		return kc.errors["ServiceEvent"]
+	kc.hits["WatchServices"] += 1
+	if kc.hits["WatchServices"] < 5 && kc.errors["WatchServices"] != nil {
+		return kc.errors["WatchServices"]
 	}
 
 	for i := range kc.serviceEvents {

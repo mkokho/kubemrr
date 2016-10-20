@@ -56,8 +56,8 @@ func TestRunWatch(t *testing.T) {
 		t.Errorf("Pods in the cache has not been updated")
 	}
 
-	if kc.hitsGetServices < 2 {
-		t.Errorf("Not enough GetService requests")
+	if kc.hits["WatchServices"] < 1 {
+		t.Errorf("Not enough WatchServices requests")
 	}
 
 	if c.services == nil {
@@ -106,6 +106,19 @@ func TestLoopWatchPods(t *testing.T) {
 
 	if _, ok := c.pods["pod2"]; ok {
 		t.Errorf("Pod [%s] should have been deleted", "pod2")
+	}
+}
+
+func TestLoopWatchServicesFailure(t *testing.T) {
+	c := NewMrrCache()
+	kc := NewTestKubeClient()
+	kc.errors["WatchServices"] = errors.New("Test Error")
+
+	loopWatchServices(c, kc)
+
+	time.Sleep(10 * time.Millisecond)
+	if kc.hits["WatchServices"] < 2 {
+		t.Errorf("Not enough WatchServices calls")
 	}
 }
 
