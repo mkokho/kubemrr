@@ -184,6 +184,18 @@ type TestKubeClient struct {
 	hitsGetPods        int
 	hitsGetServices    int
 	hitsGetDeployments int
+
+	podEvents []*PodEvent
+
+	hits   map[string]int
+	errors map[string]error
+}
+
+func NewTestKubeClient() *TestKubeClient {
+	kc := &TestKubeClient{}
+	kc.hits = map[string]int{}
+	kc.errors = map[string]error{}
+	return kc
 }
 
 func (kc *TestKubeClient) BaseURL() *url.URL {
@@ -206,5 +218,14 @@ func (kc *TestKubeClient) GetDeployments() ([]Deployment, error) {
 }
 
 func (kc *TestKubeClient) WatchPods(out chan *PodEvent) error {
-	return nil
+	kc.hits["WatchPods"] += 1
+	if kc.hits["WatchPods"] < 5 && kc.errors["WatchPods"] != nil {
+		return kc.errors["WatchPods"]
+	}
+
+	for i := range kc.podEvents {
+		out <- kc.podEvents[i]
+	}
+	for {
+	}
 }

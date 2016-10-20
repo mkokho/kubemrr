@@ -74,6 +74,38 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) {
 	log.Println("Kube Mirror has stopped")
 }
 
+func loopWatchPods(c *MrrCache, kc KubeClient) {
+	events := make(chan *PodEvent)
+
+	watch := func() {
+		for {
+			log.Printf("Started to watch pods")
+			err := kc.WatchPods(events)
+			if err != nil {
+				log.Printf("Disruption while watching pods: %s", err)
+			}
+		}
+	}
+
+	update := func() {
+		for {
+			select {
+			case e := <-events:
+				log.Printf("Received event [%s] for pod [%s]\n", e.Type, e.Pod.Name)
+				switch e.Type {
+				case Deleted:
+					c.removePod(&e.Pod)
+				case Added, Modified:
+					c.updatePod(&e.Pod)
+				}
+			}
+		}
+	}
+
+	go watch()
+	go update()
+}
+
 func loopUpdatePods(c *MrrCache, kc KubeClient, interval time.Duration) {
 	pods, err := kc.GetPods()
 	if err != nil {

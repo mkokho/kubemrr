@@ -13,9 +13,12 @@ type MrrCache struct {
 }
 
 func NewMrrCache() *MrrCache {
-	return &MrrCache{
-		mu: &sync.RWMutex{},
-	}
+	c := &MrrCache{}
+	c.mu = &sync.RWMutex{}
+	c.pods = map[string]*Pod{}
+	c.services = map[string]*Service{}
+	c.deployments = map[string]*Deployment{}
+	return c
 }
 
 func (c *MrrCache) Pods(f *Filter, pods *[]Pod) error {
@@ -56,6 +59,20 @@ func (c *MrrCache) setPods(pods []Pod) {
 	for _, p := range pods {
 		c.pods[p.Name] = &p
 	}
+}
+
+func (c *MrrCache) updatePod(pod *Pod) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.pods[pod.ObjectMeta.Name] = pod
+}
+
+func (c *MrrCache) removePod(pod *Pod) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	delete(c.pods, pod.ObjectMeta.Name)
 }
 
 func (c *MrrCache) setServices(services []Service) {
