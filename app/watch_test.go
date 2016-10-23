@@ -13,6 +13,7 @@ func TestRunWatchInvalidArgs(t *testing.T) {
 	buf := bytes.NewBuffer([]byte{})
 	f := &TestFactory{stdErr: buf}
 	cmd := NewWatchCommand(f)
+	cmd.Flags().Set("port", "0")
 
 	tests := []struct {
 		args []string
@@ -24,7 +25,7 @@ func TestRunWatchInvalidArgs(t *testing.T) {
 			args: []string{"not-a-url"},
 		},
 		{
-			args: []string{"first", "second"},
+			args: []string{"http://k8s-server_1.com", "not-a-url"},
 		},
 	}
 
@@ -38,33 +39,40 @@ func TestRunWatchInvalidArgs(t *testing.T) {
 }
 
 func TestRunWatch(t *testing.T) {
-	kc := NewTestKubeClient()
-	kc.baseURL, _ = url.Parse("test-url")
 	c := NewMrrCache()
-	f := &TestFactory{kubeClient: kc, mrrCache: c}
+	f := NewTestFactory()
+	f.mrrCache = c
+
+	servers := []string{
+		"http://k8s-server_1.com",
+		"http://k8s-server_2.com",
+	}
+
+	for _, s := range servers {
+		kc := NewTestKubeClient()
+		kc.baseURL, _ = url.Parse(s)
+		f.kubeClients[s] = kc
+	}
+
 	cmd := NewWatchCommand(f)
 	cmd.Flags().Set("port", "0")
-	go cmd.Run(cmd, []string{"http://k8s-server.example.org"})
-
+	go cmd.Run(cmd, servers)
 	time.Sleep(10 * time.Millisecond)
-	if kc.hits["WatchPods"] < 1 {
-		t.Errorf("Not enough WatchPods requests")
+
+	for s, kc := range f.kubeClients {
+		for _, w := range []string{"WatchPods", "WatchServices", "WatchDeployments"} {
+			if kc.hits[w] < 1 {
+				t.Errorf("Not enough %s requests for server %s", w, s)
+			}
+		}
 	}
 
 	if c.pods == nil {
 		t.Errorf("Pods in the cache has not been updated")
 	}
 
-	if kc.hits["WatchServices"] < 1 {
-		t.Errorf("Not enough WatchServices requests")
-	}
-
 	if c.services == nil {
 		t.Errorf("Services in the cache has not been updated")
-	}
-
-	if kc.hits["WatchDeployments"] < 1 {
-		t.Errorf("Not enough WatchDeployments requests")
 	}
 
 	if c.deployments == nil {

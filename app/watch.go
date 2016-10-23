@@ -16,9 +16,9 @@ type MrrFilter struct {
 func NewWatchCommand(f Factory) *cobra.Command {
 	var watchCmd = &cobra.Command{
 		Use:   "watch [flags] [url]",
-		Short: "Starts a mirror of one Kubernetes API server",
+		Short: "Starts a mirror of Kubernetes API servers",
 		Long: `
-Starts a mirror of one Kubernetes API server
+Starts a mirror of Kubernetes API servers
 `,
 		Run: func(cmd *cobra.Command, args []string) {
 			RunCommon(cmd)
@@ -31,8 +31,8 @@ Starts a mirror of one Kubernetes API server
 }
 
 func RunWatch(f Factory, cmd *cobra.Command, args []string) {
-	if len(args) != 1 {
-		fmt.Fprintf(f.StdErr(), "You must specify URL of Kubernetes API")
+	if len(args) < 1 {
+		fmt.Fprint(f.StdErr(), "No URL given")
 		return
 	}
 
@@ -44,25 +44,27 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) {
 		return
 	}
 
-	url, err := url.ParseRequestURI(args[0])
-	if err != nil {
-		fmt.Fprintf(f.StdErr(), "Could not parse [%s] as URL: %v", args[0], err)
-		return
+	c := f.MrrCache()
+
+	for i := range args {
+		url, err := url.ParseRequestURI(args[i])
+		if err != nil {
+			fmt.Fprintf(f.StdErr(), "Could not parse [%s] as URL: %v", args[i], err)
+			return
+		}
+
+		kc := f.KubeClient(url)
+		loopWatchPods(c, kc)
+		loopWatchServices(c, kc)
+		loopWatchDeployments(c, kc)
 	}
 
 	log.Infof("Kube Mirror is listening on %s", bind)
-
-	c := f.MrrCache()
-	kc := f.KubeClient(url)
-	loopWatchPods(c, kc)
-	loopWatchServices(c, kc)
-	loopWatchDeployments(c, kc)
 	err = f.Serve(l, c)
 	if err != nil {
 		fmt.Fprintf(f.StdErr(), "Kube Mirror encounered unexpected error: %v", err)
 		return
 	}
-
 	log.Println("Kube Mirror has stopped")
 }
 
@@ -71,7 +73,7 @@ func loopWatchPods(c *MrrCache, kc KubeClient) {
 
 	watch := func() {
 		for {
-			log.Infof("Started to watch pods")
+			log.Infof("Started to watch pods for %s", kc.BaseURL().String())
 			err := kc.WatchPods(events)
 			if err != nil {
 				log.Infof("Disruption while watching pods: %s", err)
@@ -104,7 +106,7 @@ func loopWatchServices(c *MrrCache, kc KubeClient) {
 
 	watch := func() {
 		for {
-			log.Infof("Started to watch services")
+			log.Infof("Started to watch services for %s", kc.BaseURL().String())
 			err := kc.WatchServices(events)
 			if err != nil {
 				log.Infof("Disruption while watching services: %s", err)
@@ -137,7 +139,7 @@ func loopWatchDeployments(c *MrrCache, kc KubeClient) {
 
 	watch := func() {
 		for {
-			log.Infof("Started to watch deployments")
+			log.Infof("Started to watch deployments for %s", kc.BaseURL().String())
 			err := kc.WatchDeployments(events)
 			if err != nil {
 				log.Infof("Disruption while watching services: %s", err)

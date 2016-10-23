@@ -91,11 +91,17 @@ func (f *DefaultFactory) Serve(l net.Listener, cache *MrrCache) error {
 }
 
 type TestFactory struct {
-	mrrClient  MrrClient
-	mrrCache   *MrrCache
-	kubeClient KubeClient
-	stdOut     io.Writer
-	stdErr     io.Writer
+	mrrClient   MrrClient
+	mrrCache    *MrrCache
+	kubeClients map[string]*TestKubeClient
+	stdOut      io.Writer
+	stdErr      io.Writer
+}
+
+func NewTestFactory() *TestFactory {
+	return &TestFactory{
+		kubeClients: make(map[string]*TestKubeClient),
+	}
 }
 
 func (f *TestFactory) MrrClient(address string) (MrrClient, error) {
@@ -127,5 +133,5 @@ func (f *TestFactory) Serve(l net.Listener, cache *MrrCache) error {
 }
 
 func (f *TestFactory) KubeClient(url *url.URL) KubeClient {
-	return f.kubeClient
+	return f.kubeClients[url.String()]
 }
