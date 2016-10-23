@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -46,16 +47,16 @@ func TestRunGetInvalidArgs(t *testing.T) {
 func TestRunGet(t *testing.T) {
 	tc := &TestMirrorClient{
 		pods: []Pod{
-			Pod{ObjectMeta: ObjectMeta{Name: "pod1"}},
-			Pod{ObjectMeta: ObjectMeta{Name: "pod2"}},
+			{ObjectMeta: ObjectMeta{Name: "pod1"}},
+			{ObjectMeta: ObjectMeta{Name: "pod2"}},
 		},
 		services: []Service{
-			Service{ObjectMeta: ObjectMeta{Name: "service1"}},
-			Service{ObjectMeta: ObjectMeta{Name: "service2"}},
+			{ObjectMeta: ObjectMeta{Name: "service1"}},
+			{ObjectMeta: ObjectMeta{Name: "service2"}},
 		},
 		deployments: []Deployment{
-			Deployment{ObjectMeta: ObjectMeta{Name: "deployment1"}},
-			Deployment{ObjectMeta: ObjectMeta{Name: "deployment2"}},
+			{ObjectMeta: ObjectMeta{Name: "deployment1"}},
+			{ObjectMeta: ObjectMeta{Name: "deployment2"}},
 		},
 	}
 	buf := bytes.NewBuffer([]byte{})
@@ -107,4 +108,57 @@ func TestRunGetClientError(t *testing.T) {
 			t.Errorf("Running [get %v]: error output [%v] was not equal to expected [%v]", test, buf, tc.err)
 		}
 	}
+}
+
+func TestParseKubeConfigFailures(t *testing.T) {
+	tests := []struct {
+		filename string
+		complain string
+	}{
+		{
+			filename: "test_data/kubeconfig_missing",
+			complain: "not read",
+		},
+		{
+			filename: "test_data/kubeconfig_invalid",
+			complain: "invalid",
+		},
+	}
+
+	for _, test := range tests {
+		_, err := parseKubeConfig(test.filename)
+		if err == nil {
+			t.Errorf("Expected an error for file %s", test.filename)
+			continue
+		}
+
+		if !strings.Contains(err.Error(), test.complain) {
+			t.Errorf("Error [%s] does not contain [%s]", err, test.complain)
+		}
+	}
+}
+
+func TestParseKubeConfig(t *testing.T) {
+	actual, err := parseKubeConfig("test_data/kubeconfig_valid")
+	if err != nil {
+		t.Errorf("Unexpected error: %s", err)
+		return
+	}
+
+	expected := Config{
+		CurrentContext: "prod",
+		Contexts: []ContextWrap{
+			{"dev", Context{"cluster_2", "red"}},
+			{"prod", Context{"cluster_1", "blue"}},
+		},
+		Clusters: []ClusterWrap{
+			{"cluster_1", Cluster{"https://foo.com"}},
+			{"cluster_2", Cluster{"https://bar.com"}},
+		},
+	}
+
+	if !reflect.DeepEqual(expected, actual) {
+		t.Errorf("Expected %+v, got %+v", expected, actual)
+	}
+
 }

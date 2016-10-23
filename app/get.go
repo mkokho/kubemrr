@@ -4,7 +4,9 @@ import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 	"io"
+	"io/ioutil"
 	"regexp"
 	"strings"
 )
@@ -131,4 +133,19 @@ func outputDeployments(client MrrClient, out io.Writer) error {
 	}
 
 	return nil
+}
+
+func parseKubeConfig(filename string) (Config, error) {
+	res := Config{}
+	raw, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return res, fmt.Errorf("could not read file %s: %s", filename, err)
+	}
+
+	err = yaml.Unmarshal(raw, &res)
+	if err != nil {
+		return res, fmt.Errorf("could not parse file %s: %s", filename, err)
+	}
+
+	return res, nil
 }

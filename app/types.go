@@ -252,3 +252,27 @@ type DeploymentList struct {
 	// Items is the list of deployments.
 	Items []Deployment `json:"items"`
 }
+
+type Cluster struct {
+	Server string `yaml:"server"`
+}
+
+type ClusterWrap struct {
+	Name    string  `yaml:"name"`
+	Cluster Cluster `yaml:"cluster"`
+}
+type Context struct {
+	Cluster   string `yaml:"cluster"`
+	Namespace string `yaml:"namespace"`
+}
+
+type ContextWrap struct {
+	Name    string  `json:"name"`
+	Context Context `yaml:"context"`
+}
+
+type Config struct {
+	Clusters       []ClusterWrap `yaml:"clusters"`
+	Contexts       []ContextWrap `yaml:"contexts"`
+	CurrentContext string        `yaml:"current-context"`
+}
