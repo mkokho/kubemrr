@@ -11,7 +11,8 @@ import (
 
 func TestRunWatchInvalidArgs(t *testing.T) {
 	buf := bytes.NewBuffer([]byte{})
-	f := &TestFactory{stdErr: buf}
+	f := NewTestFactory()
+	f.stdErr = buf
 	cmd := NewWatchCommand(f)
 	cmd.Flags().Set("port", "0")
 

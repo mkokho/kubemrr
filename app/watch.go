@@ -47,13 +47,15 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) {
 	c := f.MrrCache()
 
 	for i := range args {
-		url, err := url.ParseRequestURI(args[i])
-		if err != nil {
+		url, err := url.Parse(args[i])
+		if err != nil || url.Scheme == "" {
 			fmt.Fprintf(f.StdErr(), "Could not parse [%s] as URL: %v", args[i], err)
 			return
 		}
 
 		kc := f.KubeClient(url)
+		log.Infof("Created kube client for %s", args[i])
+
 		loopWatchPods(c, kc)
 		loopWatchServices(c, kc)
 		loopWatchDeployments(c, kc)

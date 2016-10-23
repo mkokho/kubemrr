@@ -133,5 +133,11 @@ func (f *TestFactory) Serve(l net.Listener, cache *MrrCache) error {
 }
 
 func (f *TestFactory) KubeClient(url *url.URL) KubeClient {
-	return f.kubeClients[url.String()]
+	kc, ok := f.kubeClients[url.String()]
+	if !ok {
+		kc = NewTestKubeClient()
+		kc.baseURL = url
+		f.kubeClients[url.String()] = kc
+	}
+	return kc
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"net/url"
 )
@@ -205,6 +206,7 @@ type TestKubeClient struct {
 
 func NewTestKubeClient() *TestKubeClient {
 	kc := &TestKubeClient{}
+	kc.baseURL, _ = url.Parse(fmt.Sprintf("random-url-%d", rand.Intn(999)))
 	kc.hits = map[string]int{}
 	kc.errors = map[string]error{}
 	return kc
