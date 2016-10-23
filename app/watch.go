@@ -9,11 +9,10 @@ import (
 	"time"
 )
 
-type (
-	MrrFilter struct {
-		NamePrefix string
-	}
-)
+type MrrFilter struct {
+	Server    string
+	Namespace string
+}
 
 func NewWatchCommand(f Factory) *cobra.Command {
 	var watchCmd = &cobra.Command{
