@@ -10,7 +10,7 @@ import (
 )
 
 type (
-	Filter struct {
+	MrrFilter struct {
 		NamePrefix string
 	}
 )

@@ -21,7 +21,7 @@ func NewMrrCache() *MrrCache {
 	return c
 }
 
-func (c *MrrCache) Pods(f *Filter, pods *[]Pod) error {
+func (c *MrrCache) Pods(f *MrrFilter, pods *[]Pod) error {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -31,7 +31,7 @@ func (c *MrrCache) Pods(f *Filter, pods *[]Pod) error {
 	return nil
 }
 
-func (c *MrrCache) Services(f *Filter, services *[]Service) error {
+func (c *MrrCache) Services(f *MrrFilter, services *[]Service) error {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -41,7 +41,7 @@ func (c *MrrCache) Services(f *Filter, services *[]Service) error {
 	return nil
 }
 
-func (c *MrrCache) Deployments(f *Filter, deployments *[]Deployment) error {
+func (c *MrrCache) Deployments(f *MrrFilter, deployments *[]Deployment) error {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -144,19 +144,19 @@ func NewMrrClient(address string) (*MrrClientDefault, error) {
 
 func (mc *MrrClientDefault) Pods() ([]Pod, error) {
 	var pods []Pod
-	err := mc.conn.Call("MrrCache.Pods", &Filter{}, &pods)
+	err := mc.conn.Call("MrrCache.Pods", &MrrFilter{}, &pods)
 	return pods, err
 }
 
 func (mc *MrrClientDefault) Services() ([]Service, error) {
 	var services []Service
-	err := mc.conn.Call("MrrCache.Services", &Filter{}, &services)
+	err := mc.conn.Call("MrrCache.Services", &MrrFilter{}, &services)
 	return services, err
 }
 
 func (mc *MrrClientDefault) Deployments() ([]Deployment, error) {
 	var deployments []Deployment
-	err := mc.conn.Call("MrrCache.Deployments", &Filter{}, &deployments)
+	err := mc.conn.Call("MrrCache.Deployments", &MrrFilter{}, &deployments)
 	return deployments, err
 }
 
