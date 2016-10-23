@@ -6,7 +6,6 @@ import (
 	"github.com/spf13/cobra"
 	"net"
 	"net/url"
-	"time"
 )
 
 type MrrFilter struct {
@@ -164,46 +163,4 @@ func loopWatchDeployments(c *MrrCache, kc KubeClient) {
 
 	go watch()
 	go update()
-}
-
-func loopUpdatePods(c *MrrCache, kc KubeClient, interval time.Duration) {
-	pods, err := kc.GetPods()
-	if err != nil {
-		log.Infof("Could not get pods from %v: %v", kc.BaseURL(), err)
-	}
-
-	if pods != nil {
-		log.Infof("Received %d pods from %v", len(pods), kc.BaseURL())
-		c.setPods(pods)
-	}
-	time.Sleep(interval)
-	loopUpdatePods(c, kc, interval)
-}
-
-func loopUpdateServices(c *MrrCache, kc KubeClient, interval time.Duration) {
-	services, err := kc.GetServices()
-	if err != nil {
-		log.Infof("Could not get services from %v: %v", kc.BaseURL(), err)
-	}
-
-	if services != nil {
-		log.Infof("Received %d services from %v", len(services), kc.BaseURL())
-		c.setServices(services)
-	}
-	time.Sleep(interval)
-	loopUpdateServices(c, kc, interval)
-}
-
-func loopUpdateDeployments(c *MrrCache, kc KubeClient, interval time.Duration) {
-	deployments, err := kc.GetDeployments()
-	if err != nil {
-		log.Infof("Could not get deployments from %v: %v", kc.BaseURL(), err)
-	}
-
-	if deployments != nil {
-		log.Infof("Received %d deployments from %v", len(deployments), kc.BaseURL())
-		c.setDeployments(deployments)
-	}
-	time.Sleep(interval)
-	loopUpdateDeployments(c, kc, interval)
 }
