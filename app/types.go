@@ -6,16 +6,45 @@ type ObjectMeta struct {
 	ResourceVersion string `json:"resourceVersion,omitempty"`
 }
 
+type TypeMeta struct {
+	Kind string `json:"kind,omitempty"`
+}
+
 type Service struct {
+	TypeMeta   `json:",inline"`
 	ObjectMeta `json:"metadata,omitempty"`
 }
 
 type Pod struct {
+	TypeMeta   `json:",inline"`
 	ObjectMeta `json:"metadata,omitempty"`
 }
 
 type Deployment struct {
+	TypeMeta   `json:",inline"`
 	ObjectMeta `json:"metadata,omitempty"`
+}
+
+type KubeObject struct {
+	TypeMeta   `json:",inline"`
+	ObjectMeta `json:"metadata,omitempty"`
+}
+
+func (p *Pod) untype() KubeObject {
+	return KubeObject{TypeMeta{"pod"}, p.ObjectMeta}
+}
+
+func (p *Service) untype() KubeObject {
+	return KubeObject{TypeMeta{"service"}, p.ObjectMeta}
+}
+
+func (p *Deployment) untype() KubeObject {
+	return KubeObject{TypeMeta{"deployment"}, p.ObjectMeta}
+}
+
+//KubeServer represents a Kubernetes API server which we ask for information
+type KubeServer struct {
+	URL string
 }
 
 //Config represent configuration written in .kube/config file

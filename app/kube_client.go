@@ -35,6 +35,7 @@ type DeploymentEvent struct {
 
 type KubeClient interface {
 	BaseURL() *url.URL
+	Server() KubeServer
 	WatchPods(out chan *PodEvent) error
 	WatchServices(out chan *ServiceEvent) error
 	WatchDeployments(out chan *DeploymentEvent) error
@@ -55,6 +56,10 @@ func NewKubeClient(url *url.URL) KubeClient {
 
 func (kc *DefaultKubeClient) BaseURL() *url.URL {
 	return kc.baseURL
+}
+
+func (kc *DefaultKubeClient) Server() KubeServer {
+	return KubeServer{kc.baseURL.String()}
 }
 
 func (kc *DefaultKubeClient) WatchPods(out chan *PodEvent) error {
@@ -210,6 +215,10 @@ func NewTestKubeClient() *TestKubeClient {
 	kc.hits = map[string]int{}
 	kc.errors = map[string]error{}
 	return kc
+}
+
+func (kc *TestKubeClient) Server() KubeServer {
+	return KubeServer{kc.baseURL.String()}
 }
 
 func (kc *TestKubeClient) BaseURL() *url.URL {

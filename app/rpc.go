@@ -6,6 +6,7 @@ import (
 )
 
 type MrrCache struct {
+	objects     map[KubeServer][]KubeObject
 	pods        map[string]*Pod
 	services    map[string]*Service
 	deployments map[string]*Deployment
@@ -15,6 +16,7 @@ type MrrCache struct {
 func NewMrrCache() *MrrCache {
 	c := &MrrCache{}
 	c.mu = &sync.RWMutex{}
+	c.objects = make(map[KubeServer][]KubeObject)
 	c.pods = map[string]*Pod{}
 	c.services = map[string]*Service{}
 	c.deployments = map[string]*Deployment{}
@@ -49,6 +51,60 @@ func (c *MrrCache) Deployments(f *MrrFilter, deployments *[]Deployment) error {
 		*deployments = append(*deployments, *d)
 	}
 	return nil
+}
+
+func (c *MrrCache) setKubeObjects(server KubeServer, xs []KubeObject) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.objects[server] = xs
+}
+
+func (c *MrrCache) updateKubeObject(server KubeServer, o KubeObject) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	os, ok := c.objects[server]
+	if !ok {
+		os = make([]KubeObject, 0)
+	}
+
+	found := false
+	for i := range os {
+		if os[i].Name == o.Name {
+			os[i] = o
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		os = append(os, o)
+	}
+	c.objects[server] = os
+}
+
+func (c *MrrCache) deleteKubeObject(server KubeServer, o KubeObject) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	os, ok := c.objects[server]
+	if !ok {
+		return
+	}
+
+	idx := -1
+	for i := range os {
+		if os[i].Name == o.Name {
+			idx = i
+			break
+		}
+	}
+
+	if idx >= 0 {
+		os = append(os[:idx], os[idx+1:]...)
+		c.objects[server] = os
+	}
 }
 
 func (c *MrrCache) setPods(pods []Pod) {

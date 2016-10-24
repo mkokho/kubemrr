@@ -98,26 +98,23 @@ func TestLoopWatchPods(t *testing.T) {
 	c := NewMrrCache()
 	kc := NewTestKubeClient()
 	kc.podEvents = []*PodEvent{
-		{Added, &Pod{ObjectMeta: ObjectMeta{Name: "pod0"}}},
+		{Added, &Pod{ObjectMeta: ObjectMeta{Name: "a"}}},
+		{Deleted, &Pod{ObjectMeta: ObjectMeta{Name: "a"}}},
 		{Added, &Pod{ObjectMeta: ObjectMeta{Name: "pod1"}}},
+		{Added, &Pod{ObjectMeta: ObjectMeta{Name: "pod0"}}},
 		{Modified, &Pod{ObjectMeta: ObjectMeta{Name: "pod1", ResourceVersion: "v2"}}},
-		{Deleted, &Pod{ObjectMeta: ObjectMeta{Name: "pod0"}}},
-		{Added, &Pod{ObjectMeta: ObjectMeta{Name: "pod2"}}},
+		{Added, &Pod{ObjectMeta: ObjectMeta{Name: "z"}}},
+		{Deleted, &Pod{ObjectMeta: ObjectMeta{Name: "z"}}},
 	}
 
 	loopWatchPods(c, kc)
 	time.Sleep(10 * time.Millisecond)
 
-	for _, i := range []int{2, 4} {
-		expected := *kc.podEvents[i].Pod
-		actual := *c.pods[expected.Name]
-		if !reflect.DeepEqual(actual, expected) {
-			t.Errorf("Cache version %v is not equal to expected %v", actual, expected)
-		}
-	}
-
-	if _, ok := c.pods["pod0"]; ok {
-		t.Errorf("Pod [%s] should have been deleted", "pod0")
+	//order is matter is slice
+	expected := []KubeObject{kc.podEvents[4].Pod.untype(), kc.podEvents[3].Pod.untype()}
+	actual := c.objects[kc.Server()]
+	if !reflect.DeepEqual(actual, expected) {
+		t.Errorf("Cache version %+v is not equal to expected %+v", actual, expected)
 	}
 }
 

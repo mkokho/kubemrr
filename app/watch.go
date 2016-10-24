@@ -90,8 +90,10 @@ func loopWatchPods(c *MrrCache, kc KubeClient) {
 				log.Infof("Received event [%s] for pod [%s]", e.Type, e.Pod.Name)
 				switch e.Type {
 				case Deleted:
+					c.deleteKubeObject(kc.Server(), e.Pod.untype())
 					c.removePod(e.Pod)
 				case Added, Modified:
+					c.updateKubeObject(kc.Server(), e.Pod.untype())
 					c.updatePod(e.Pod)
 				}
 				log.WithField("pods", c.pods).Debugf("Cached pods")
