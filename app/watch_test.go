@@ -118,6 +118,27 @@ func TestLoopWatchPods(t *testing.T) {
 	}
 }
 
+func TestLoopWatchPodsWithNamespaces(t *testing.T) {
+	c := NewMrrCache()
+	kc := NewTestKubeClient()
+	kc.podEvents = []*PodEvent{
+		{Added, &Pod{ObjectMeta: ObjectMeta{Name: "a", Namespace: "y1"}}},
+		{Added, &Pod{ObjectMeta: ObjectMeta{Name: "a", Namespace: "y2"}}},
+		{Added, &Pod{ObjectMeta: ObjectMeta{Name: "a", Namespace: "y3"}}},
+		{Deleted, &Pod{ObjectMeta: ObjectMeta{Name: "a", Namespace: "y3"}}},
+	}
+
+	loopWatchPods(c, kc)
+	time.Sleep(10 * time.Millisecond)
+
+	//order is matter is slice
+	expected := []KubeObject{kc.podEvents[0].Pod.untype(), kc.podEvents[1].Pod.untype()}
+	actual := c.objects[kc.Server()]
+	if !reflect.DeepEqual(actual, expected) {
+		t.Errorf("Cache version %+v is not equal to expected %+v", actual, expected)
+	}
+}
+
 func TestLoopWatchServicesFailure(t *testing.T) {
 	c := NewMrrCache()
 	kc := NewTestKubeClient()
