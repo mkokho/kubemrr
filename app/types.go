@@ -11,17 +11,14 @@ type TypeMeta struct {
 }
 
 type Service struct {
-	TypeMeta   `json:",inline"`
 	ObjectMeta `json:"metadata,omitempty"`
 }
 
 type Pod struct {
-	TypeMeta   `json:",inline"`
 	ObjectMeta `json:"metadata,omitempty"`
 }
 
 type Deployment struct {
-	TypeMeta   `json:",inline"`
 	ObjectMeta `json:"metadata,omitempty"`
 }
 

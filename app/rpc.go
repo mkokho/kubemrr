@@ -3,7 +3,15 @@ package app
 import (
 	"net/rpc"
 	"sync"
+	"errors"
+	log "github.com/Sirupsen/logrus"
 )
+
+type MrrFilter struct {
+	Server    KubeServer
+	Namespace string
+	Kind      string
+}
 
 type MrrCache struct {
 	objects     map[KubeServer][]KubeObject
@@ -21,6 +29,30 @@ func NewMrrCache() *MrrCache {
 	c.services = map[string]*Service{}
 	c.deployments = map[string]*Deployment{}
 	return c
+}
+
+func (c *MrrCache) Objects(f *MrrFilter, os *[]KubeObject) error {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	if f == nil {
+		return errors.New("Cannot find pods with nil filter")
+	}
+
+	_, ok := c.objects[f.Server]
+	if !ok {
+		log.Infof("Cache does not know server %v", f.Server)
+		return nil
+	}
+
+	res := []KubeObject{}
+	for _, o := range c.objects[f.Server] {
+		if o.Namespace == f.Namespace && o.Kind == f.Kind {
+			res = append(res, o)
+		}
+	}
+	*os = res
+	return nil
 }
 
 func (c *MrrCache) Pods(f *MrrFilter, pods *[]Pod) error {
@@ -180,6 +212,7 @@ func (c *MrrCache) setDeployments(deployments []Deployment) {
 }
 
 type MrrClient interface {
+	Objects(f MrrFilter) ([]KubeObject, error)
 	Pods() ([]Pod, error)
 	Services() ([]Service, error)
 	Deployments() ([]Deployment, error)
@@ -196,6 +229,12 @@ func NewMrrClient(address string) (*MrrClientDefault, error) {
 	}
 
 	return &MrrClientDefault{conn: connection}, nil
+}
+
+func (mc *MrrClientDefault) Objects(f MrrFilter) ([]KubeObject, error) {
+	var os []KubeObject
+	err := mc.conn.Call("MrrCache.Objects", f, &os)
+	return os, err
 }
 
 func (mc *MrrClientDefault) Pods() ([]Pod, error) {
@@ -221,6 +260,10 @@ type TestMirrorClient struct {
 	pods        []Pod
 	services    []Service
 	deployments []Deployment
+}
+
+func (mc *TestMirrorClient) Objects(f MrrFilter) ([]KubeObject, error) {
+	return nil, nil
 }
 
 func (mc *TestMirrorClient) Pods() ([]Pod, error) {

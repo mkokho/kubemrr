@@ -8,11 +8,6 @@ import (
 	"net/url"
 )
 
-type MrrFilter struct {
-	Server    string
-	Namespace string
-}
-
 func NewWatchCommand(f Factory) *cobra.Command {
 	var watchCmd = &cobra.Command{
 		Use:   "watch [flags] [url]",
