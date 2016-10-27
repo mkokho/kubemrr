@@ -18,7 +18,7 @@ const defaultAirbrakeHost = "https://airbrake.io"
 const waitTimeout = 5 * time.Second
 
 var (
-	errClosed = errors.New("gobrake: notifier is closed")
+	errClosed      = errors.New("gobrake: notifier is closed")
 	errRateLimited = errors.New("gobrake: rate limited")
 )
 
@@ -49,17 +49,17 @@ type filter func(*Notice) *Notice
 
 type Notifier struct {
 	// http.Client that is used to interact with Airbrake API.
-	Client          *http.Client
+	Client *http.Client
 
 	projectId       int64
 	projectKey      string
 	createNoticeURL string
 
-	filters         []filter
+	filters []filter
 
-	wg              sync.WaitGroup
-	noticeCh        chan *Notice
-	closed          chan struct{}
+	wg       sync.WaitGroup
+	noticeCh chan *Notice
+	closed   chan struct{}
 }
 
 func NewNotifier(projectId int64, projectKey string) *Notifier {
@@ -100,7 +100,7 @@ func (n *Notifier) Notify(e interface{}, req *http.Request) {
 // Notice returns Aibrake notice created from error and request. depth
 // determines which call frame to use when constructing backtrace.
 func (n *Notifier) Notice(err interface{}, req *http.Request, depth int) *Notice {
-	return NewNotice(err, req, depth + 3)
+	return NewNotice(err, req, depth+3)
 }
 
 type sendResponse struct {
@@ -188,12 +188,12 @@ func (n *Notifier) worker() {
 		case notice := <-n.noticeCh:
 			n.sendNotice(notice)
 		case <-n.closed:
-				select {
-				case notice := <-n.noticeCh:
-					n.sendNotice(notice)
-				default:
-					return
-				}
+			select {
+			case notice := <-n.noticeCh:
+				n.sendNotice(notice)
+			default:
+				return
+			}
 		}
 	}
 }
