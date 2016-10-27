@@ -50,9 +50,9 @@ func stream(w http.ResponseWriter, items []string) {
 
 func TestWatchPods(t *testing.T) {
 	events := []interface{}{
-		&PodEvent{Added, &Pod{ObjectMeta: ObjectMeta{Name: "first"}}},
-		&PodEvent{Modified, &Pod{ObjectMeta: ObjectMeta{Name: "second"}}},
-		&PodEvent{Deleted, &Pod{ObjectMeta: ObjectMeta{Name: "last"}}},
+		&ObjectEvent{Added, &KubeObject{ObjectMeta: ObjectMeta{Name: "first"}}},
+		&ObjectEvent{Modified, &KubeObject{ObjectMeta: ObjectMeta{Name: "second"}}},
+		&ObjectEvent{Deleted, &KubeObject{ObjectMeta: ObjectMeta{Name: "last"}}},
 	}
 
 	setup()
@@ -69,8 +69,8 @@ func TestWatchPods(t *testing.T) {
 	},
 	)
 
-	inEvents := make(chan *PodEvent, 10)
-	err := client.WatchPods(inEvents)
+	inEvents := make(chan *ObjectEvent, 10)
+	err := client.WatchObjects("pod", inEvents)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -86,9 +86,9 @@ func TestWatchPods(t *testing.T) {
 
 func TestWatchServices(t *testing.T) {
 	events := []interface{}{
-		&ServiceEvent{Added, &Service{ObjectMeta: ObjectMeta{Name: "first"}}},
-		&ServiceEvent{Modified, &Service{ObjectMeta: ObjectMeta{Name: "second"}}},
-		&ServiceEvent{Deleted, &Service{ObjectMeta: ObjectMeta{Name: "last"}}},
+		&ObjectEvent{Added, &KubeObject{ObjectMeta: ObjectMeta{Name: "first"}}},
+		&ObjectEvent{Modified, &KubeObject{ObjectMeta: ObjectMeta{Name: "second"}}},
+		&ObjectEvent{Deleted, &KubeObject{ObjectMeta: ObjectMeta{Name: "last"}}},
 	}
 
 	setup()
@@ -105,8 +105,8 @@ func TestWatchServices(t *testing.T) {
 	},
 	)
 
-	inEvents := make(chan *ServiceEvent, 10)
-	err := client.WatchServices(inEvents)
+	inEvents := make(chan *ObjectEvent, 10)
+	err := client.WatchObjects("service", inEvents)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -122,9 +122,9 @@ func TestWatchServices(t *testing.T) {
 
 func TestWatchDeployments(t *testing.T) {
 	events := []interface{}{
-		&DeploymentEvent{Added, &Deployment{ObjectMeta: ObjectMeta{Name: "first"}}},
-		&DeploymentEvent{Modified, &Deployment{ObjectMeta: ObjectMeta{Name: "second"}}},
-		&DeploymentEvent{Deleted, &Deployment{ObjectMeta: ObjectMeta{Name: "last"}}},
+		&ObjectEvent{Added, &KubeObject{ObjectMeta: ObjectMeta{Name: "first"}}},
+		&ObjectEvent{Modified, &KubeObject{ObjectMeta: ObjectMeta{Name: "second"}}},
+		&ObjectEvent{Deleted, &KubeObject{ObjectMeta: ObjectMeta{Name: "last"}}},
 	}
 
 	setup()
@@ -141,8 +141,8 @@ func TestWatchDeployments(t *testing.T) {
 	},
 	)
 
-	inEvents := make(chan *DeploymentEvent, 10)
-	err := client.WatchDeployments(inEvents)
+	inEvents := make(chan *ObjectEvent, 10)
+	err := client.WatchObjects("deployments", inEvents)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}

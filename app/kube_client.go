@@ -18,6 +18,11 @@ const (
 	Deleted  EventType = "DELETED"
 )
 
+type ObjectEvent struct {
+	Type   EventType   `json:"type"`
+	Object *KubeObject `json:"object"`
+}
+
 type PodEvent struct {
 	Type EventType `json:"type"`
 	Pod  *Pod      `json:"object"`
@@ -36,6 +41,7 @@ type DeploymentEvent struct {
 type KubeClient interface {
 	BaseURL() *url.URL
 	Server() KubeServer
+	WatchObjects(kind string, out chan *ObjectEvent) error
 	WatchPods(out chan *PodEvent) error
 	WatchServices(out chan *ServiceEvent) error
 	WatchDeployments(out chan *DeploymentEvent) error
@@ -60,6 +66,54 @@ func (kc *DefaultKubeClient) BaseURL() *url.URL {
 
 func (kc *DefaultKubeClient) Server() KubeServer {
 	return KubeServer{kc.baseURL.String()}
+}
+
+func (kc *DefaultKubeClient) WatchObjects(kind string, out chan *ObjectEvent) error {
+	switch kind {
+	case "pod":
+		return kc.Watch("api/v1/pods?watch=true", out)
+	case "service":
+		return kc.Watch("api/v1/services?watch=true", out)
+	case "deployments":
+		return kc.Watch("/apis/extensions/v1beta1/deployments?watch=true", out)
+	default:
+		return fmt.Errorf("unsupported kind: %s", kind)
+	}
+}
+
+func (kc *DefaultKubeClient) Watch(url string, out chan *ObjectEvent) error {
+	req, err := kc.newRequest("GET", url, nil)
+	if err != nil {
+		return err
+	}
+
+	res, err := kc.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("Failed to watch pods: %d", res.StatusCode)
+	}
+
+	d := json.NewDecoder(res.Body)
+
+	for {
+		var event ObjectEvent
+		err := d.Decode(&event)
+
+		if err == io.EOF {
+			return nil
+		}
+
+		if err != nil {
+			return fmt.Errorf("Could not decode data into pod event: %s", err)
+		}
+
+		out <- &event
+	}
+
+	return nil
 }
 
 func (kc *DefaultKubeClient) WatchPods(out chan *PodEvent) error {
@@ -238,6 +292,10 @@ func (kc *TestKubeClient) GetServices() ([]Service, error) {
 func (kc *TestKubeClient) GetDeployments() ([]Deployment, error) {
 	kc.hitsGetDeployments += 1
 	return []Deployment{{ObjectMeta: ObjectMeta{Name: "deployment1"}}}, nil
+}
+
+func (kc *TestKubeClient) WatchObjects(kind string, out chan *ObjectEvent) error {
+	return nil
 }
 
 func (kc *TestKubeClient) WatchPods(out chan *PodEvent) error {
