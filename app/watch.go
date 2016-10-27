@@ -66,12 +66,12 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) {
 }
 
 func loopWatchPods(c *MrrCache, kc KubeClient) {
-	events := make(chan *PodEvent)
+	events := make(chan *ObjectEvent)
 
 	watch := func() {
 		for {
 			log.Infof("Started to watch pods for %s", kc.BaseURL().String())
-			err := kc.WatchPods(events)
+			err := kc.WatchObjects("pod", events)
 			if err != nil {
 				log.Infof("Disruption while watching pods: %s", err)
 			}
@@ -82,16 +82,14 @@ func loopWatchPods(c *MrrCache, kc KubeClient) {
 		for {
 			select {
 			case e := <-events:
-				log.Infof("Received event [%s] for pod [%s]", e.Type, e.Pod.Name)
+				log.Infof("Received event [%s] for pod [%s]", e.Type, e.Object.Name)
 				switch e.Type {
 				case Deleted:
-					c.deleteKubeObject(kc.Server(), e.Pod.untype())
-					c.removePod(e.Pod)
+					c.deleteKubeObject(kc.Server(), *e.Object)
 				case Added, Modified:
-					c.updateKubeObject(kc.Server(), e.Pod.untype())
-					c.updatePod(e.Pod)
+					c.updateKubeObject(kc.Server(), *e.Object)
 				}
-				log.WithField("pods", c.pods).Debugf("Cached pods")
+				//log.WithField("pods", c.objects).Debugf("Cached objects")
 			}
 		}
 	}

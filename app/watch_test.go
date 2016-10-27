@@ -61,7 +61,7 @@ func TestRunWatch(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	for s, kc := range f.kubeClients {
-		for _, w := range []string{"WatchPods", "WatchServices", "WatchDeployments"} {
+		for _, w := range []string{"WatchObjects", "WatchServices", "WatchDeployments"} {
 			if kc.hits[w] < 1 {
 				t.Errorf("Not enough %s requests for server %s", w, s)
 			}
@@ -84,34 +84,34 @@ func TestRunWatch(t *testing.T) {
 func TestLoopWatchPodsFailure(t *testing.T) {
 	c := NewMrrCache()
 	kc := NewTestKubeClient()
-	kc.errors["WatchPods"] = errors.New("Test Error")
+	kc.errors["WatchObjects"] = errors.New("Test Error")
 
 	loopWatchPods(c, kc)
 
 	time.Sleep(10 * time.Millisecond)
-	if kc.hits["WatchPods"] < 2 {
-		t.Errorf("Not enough WatchPods calls")
+	if kc.hits["WatchObjects"] < 2 {
+		t.Errorf("Not enough WatchObjects calls")
 	}
 }
 
 func TestLoopWatchPods(t *testing.T) {
 	c := NewMrrCache()
 	kc := NewTestKubeClient()
-	kc.podEvents = []*PodEvent{
-		{Added, &Pod{ObjectMeta: ObjectMeta{Name: "a"}}},
-		{Deleted, &Pod{ObjectMeta: ObjectMeta{Name: "a"}}},
-		{Added, &Pod{ObjectMeta: ObjectMeta{Name: "pod1"}}},
-		{Added, &Pod{ObjectMeta: ObjectMeta{Name: "pod0"}}},
-		{Modified, &Pod{ObjectMeta: ObjectMeta{Name: "pod1", ResourceVersion: "v2"}}},
-		{Added, &Pod{ObjectMeta: ObjectMeta{Name: "z"}}},
-		{Deleted, &Pod{ObjectMeta: ObjectMeta{Name: "z"}}},
+	kc.objectEvents = []*ObjectEvent{
+		{Added, &KubeObject{ObjectMeta: ObjectMeta{Name: "a"}}},
+		{Deleted, &KubeObject{ObjectMeta: ObjectMeta{Name: "a"}}},
+		{Added, &KubeObject{ObjectMeta: ObjectMeta{Name: "pod1"}}},
+		{Added, &KubeObject{ObjectMeta: ObjectMeta{Name: "pod0"}}},
+		{Modified, &KubeObject{ObjectMeta: ObjectMeta{Name: "pod1", ResourceVersion: "v2"}}},
+		{Added, &KubeObject{ObjectMeta: ObjectMeta{Name: "z"}}},
+		{Deleted, &KubeObject{ObjectMeta: ObjectMeta{Name: "z"}}},
 	}
 
 	loopWatchPods(c, kc)
 	time.Sleep(10 * time.Millisecond)
 
-	//order is matter is slice
-	expected := []KubeObject{kc.podEvents[4].Pod.untype(), kc.podEvents[3].Pod.untype()}
+	//order is matter in slice
+	expected := []KubeObject{*kc.objectEvents[4].Object, *kc.objectEvents[3].Object}
 	actual := c.objects[kc.Server()]
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf("Cache version %+v is not equal to expected %+v", actual, expected)
@@ -121,18 +121,18 @@ func TestLoopWatchPods(t *testing.T) {
 func TestLoopWatchPodsWithNamespaces(t *testing.T) {
 	c := NewMrrCache()
 	kc := NewTestKubeClient()
-	kc.podEvents = []*PodEvent{
-		{Added, &Pod{ObjectMeta: ObjectMeta{Name: "a", Namespace: "y1"}}},
-		{Added, &Pod{ObjectMeta: ObjectMeta{Name: "a", Namespace: "y2"}}},
-		{Added, &Pod{ObjectMeta: ObjectMeta{Name: "a", Namespace: "y3"}}},
-		{Deleted, &Pod{ObjectMeta: ObjectMeta{Name: "a", Namespace: "y3"}}},
+	kc.objectEvents = []*ObjectEvent{
+		{Added, &KubeObject{ObjectMeta: ObjectMeta{Name: "a", Namespace: "y1"}}},
+		{Added, &KubeObject{ObjectMeta: ObjectMeta{Name: "a", Namespace: "y2"}}},
+		{Added, &KubeObject{ObjectMeta: ObjectMeta{Name: "a", Namespace: "y3"}}},
+		{Deleted, &KubeObject{ObjectMeta: ObjectMeta{Name: "a", Namespace: "y3"}}},
 	}
 
 	loopWatchPods(c, kc)
 	time.Sleep(10 * time.Millisecond)
 
 	//order is matter is slice
-	expected := []KubeObject{kc.podEvents[0].Pod.untype(), kc.podEvents[1].Pod.untype()}
+	expected := []KubeObject{*kc.objectEvents[0].Object, *kc.objectEvents[1].Object}
 	actual := c.objects[kc.Server()]
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf("Cache version %+v is not equal to expected %+v", actual, expected)

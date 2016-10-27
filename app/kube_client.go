@@ -255,6 +255,7 @@ type TestKubeClient struct {
 	hitsGetServices    int
 	hitsGetDeployments int
 
+  objectEvents     []*ObjectEvent
 	podEvents        []*PodEvent
 	serviceEvents    []*ServiceEvent
 	deploymentEvents []*DeploymentEvent
@@ -295,7 +296,15 @@ func (kc *TestKubeClient) GetDeployments() ([]Deployment, error) {
 }
 
 func (kc *TestKubeClient) WatchObjects(kind string, out chan *ObjectEvent) error {
-	return nil
+	kc.hits["WatchObjects"] += 1
+	if kc.hits["WatchObjects"] < 5 && kc.errors["WatchObjects"] != nil {
+		return kc.errors["WatchObjects"]
+	}
+
+	for i := range kc.objectEvents {
+		out <- kc.objectEvents[i]
+	}
+	select {}
 }
 
 func (kc *TestKubeClient) WatchPods(out chan *PodEvent) error {
