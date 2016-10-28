@@ -61,10 +61,8 @@ func TestRunWatch(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	for s, kc := range f.kubeClients {
-		for _, w := range []string{"WatchObjects"} {
-			if kc.hits[w] < 1 {
-				t.Errorf("Not enough %s requests for server %s", w, s)
-			}
+		if kc.hits["WatchObjects"] != 3 {
+			t.Errorf("Unexpected number of WatchObject requests for server %s", s)
 		}
 	}
 }

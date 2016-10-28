@@ -52,6 +52,8 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) {
 		log.Infof("Created kube client for %s", args[i])
 
 		loopWatchObjects(c, kc, "pod")
+		loopWatchObjects(c, kc, "service")
+		loopWatchObjects(c, kc, "deployment")
 	}
 
 	log.Infof("Kube Mirror is listening on %s", bind)
