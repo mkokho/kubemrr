@@ -9,4 +9,5 @@ func init() {
 
 func enableDebug() {
 	log.SetLevel(log.DebugLevel)
+	log.SetFormatter(&log.TextFormatter{})
 }

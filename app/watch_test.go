@@ -81,6 +81,44 @@ func TestRunWatch(t *testing.T) {
 	}
 }
 
+func TestLoopWatchObjectsFailure(t *testing.T) {
+	c := NewMrrCache()
+	kc := NewTestKubeClient()
+	kc.errors["WatchObjects"] = errors.New("Test Error")
+
+	loopWatchObjects(c, kc, "pod")
+
+	time.Sleep(10 * time.Millisecond)
+	if kc.hits["WatchObjects"] < 2 {
+		t.Errorf("Not enough WatchObjects calls")
+	}
+}
+
+
+func TestLoopWatchObjects(t *testing.T) {
+	c := NewMrrCache()
+	kc := NewTestKubeClient()
+	kc.objectEvents = []*ObjectEvent{
+		{Added, &KubeObject{ObjectMeta: ObjectMeta{Name: "a"}}},
+		{Deleted, &KubeObject{ObjectMeta: ObjectMeta{Name: "a"}}},
+		{Added, &KubeObject{ObjectMeta: ObjectMeta{Name: "pod1"}}},
+		{Added, &KubeObject{ObjectMeta: ObjectMeta{Name: "pod0"}}},
+		{Modified, &KubeObject{ObjectMeta: ObjectMeta{Name: "pod1", ResourceVersion: "v2"}}},
+		{Added, &KubeObject{ObjectMeta: ObjectMeta{Name: "z"}}},
+		{Deleted, &KubeObject{ObjectMeta: ObjectMeta{Name: "z"}}},
+	}
+
+	loopWatchObjects(c, kc, "pod")
+	time.Sleep(10 * time.Millisecond)
+
+	//order matters in slice
+	expected := []KubeObject{*kc.objectEvents[4].Object, *kc.objectEvents[3].Object}
+	actual := c.objects[kc.Server()]
+	if !reflect.DeepEqual(actual, expected) {
+		t.Errorf("Cache version %+v is not equal to expected %+v", actual, expected)
+	}
+}
+
 func TestLoopWatchPodsFailure(t *testing.T) {
 	c := NewMrrCache()
 	kc := NewTestKubeClient()

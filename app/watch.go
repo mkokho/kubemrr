@@ -65,6 +65,44 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) {
 	log.Println("Kube Mirror has stopped")
 }
 
+func loopWatchObjects(c *MrrCache, kc KubeClient, kind string) {
+	events := make(chan *ObjectEvent)
+	l := log.WithField("kind", kind).WithField("server", kc.Server().URL)
+
+	watch := func() {
+		for {
+			l.Info("started to watch")
+			err := kc.WatchObjects("pod", events)
+			fields := log.Fields{}
+			if err != nil {
+				fields["error"] = err.Error()
+			}
+			l.WithFields(fields).Info("watch connection was closed, retrying")
+		}
+	}
+
+	update := func() {
+		for {
+			select {
+			case e := <-events:
+				l.
+				WithField("name", e.Object.Name).
+				WithField("type", e.Type).
+				Info("received event")
+				switch e.Type {
+				case Deleted:
+					c.deleteKubeObject(kc.Server(), *e.Object)
+				case Added, Modified:
+					c.updateKubeObject(kc.Server(), *e.Object)
+				}
+			}
+		}
+	}
+
+	go watch()
+	go update()
+}
+
 func loopWatchPods(c *MrrCache, kc KubeClient) {
 	events := make(chan *ObjectEvent)
 
