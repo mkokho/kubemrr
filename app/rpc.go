@@ -34,6 +34,7 @@ func NewMrrCache() *MrrCache {
 func (c *MrrCache) Objects(f *MrrFilter, os *[]KubeObject) error {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
+	log.WithField("filter", f).Debug("Received request for objects")
 
 	if f == nil {
 		return errors.New("Cannot find pods with nil filter")
@@ -58,6 +59,7 @@ func (c *MrrCache) Objects(f *MrrFilter, os *[]KubeObject) error {
 			}
 		}
 	}
+	log.WithField("filter", f).WithField("objects", res).Debug("Returning result for objects")
 	*os = res
 	return nil
 }
