@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
+	"sync"
 )
 
 type EventType string
@@ -127,19 +128,20 @@ func (kc *DefaultKubeClient) newRequest(method string, urlStr string, body inter
 }
 
 type TestKubeClient struct {
-	baseURL            *url.URL
+	baseURL *url.URL
 
-  objectEvents     []*ObjectEvent
+	objectEvents []*ObjectEvent
 
-	hits   map[string]int
-	errors map[string]error
+	watchObjectHits  map[string]int
+	watchObjectLock  *sync.RWMutex
+	watchObjectError error
 }
 
 func NewTestKubeClient() *TestKubeClient {
 	kc := &TestKubeClient{}
 	kc.baseURL, _ = url.Parse(fmt.Sprintf("random-url-%d", rand.Intn(999)))
-	kc.hits = map[string]int{}
-	kc.errors = map[string]error{}
+	kc.watchObjectLock = &sync.RWMutex{}
+	kc.watchObjectHits = map[string]int{}
 	return kc
 }
 
@@ -152,9 +154,12 @@ func (kc *TestKubeClient) BaseURL() *url.URL {
 }
 
 func (kc *TestKubeClient) WatchObjects(kind string, out chan *ObjectEvent) error {
-	kc.hits["WatchObjects"] += 1
-	if kc.hits["WatchObjects"] < 5 && kc.errors["WatchObjects"] != nil {
-		return kc.errors["WatchObjects"]
+	kc.watchObjectLock.Lock()
+	kc.watchObjectHits[kind] += 1
+	kc.watchObjectLock.Unlock()
+
+	if kc.watchObjectHits[kind] < 5 && kc.watchObjectError != nil {
+		return kc.watchObjectError
 	}
 
 	for i := range kc.objectEvents {

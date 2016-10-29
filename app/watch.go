@@ -72,7 +72,7 @@ func loopWatchObjects(c *MrrCache, kc KubeClient, kind string) {
 	watch := func() {
 		for {
 			l.Info("started to watch")
-			err := kc.WatchObjects("pod", events)
+			err := kc.WatchObjects(kind, events)
 			fields := log.Fields{}
 			if err != nil {
 				fields["error"] = err.Error()

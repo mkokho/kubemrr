@@ -61,8 +61,10 @@ func TestRunWatch(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	for s, kc := range f.kubeClients {
-		if kc.hits["WatchObjects"] != 3 {
-			t.Errorf("Unexpected number of WatchObject requests for server %s", s)
+		for _, kind := range []string{"pod", "service", "deployment"} {
+			if kc.watchObjectHits[kind] != 1 {
+				t.Errorf("Unexpected number of WatchObject requests for [%s] server [%s]: %v", kind, s, kc.watchObjectHits)
+			}
 		}
 	}
 }
@@ -70,12 +72,12 @@ func TestRunWatch(t *testing.T) {
 func TestLoopWatchObjectsFailure(t *testing.T) {
 	c := NewMrrCache()
 	kc := NewTestKubeClient()
-	kc.errors["WatchObjects"] = errors.New("Test Error")
+	kc.watchObjectError = errors.New("Test Error")
 
 	loopWatchObjects(c, kc, "pod")
 
 	time.Sleep(10 * time.Millisecond)
-	if kc.hits["WatchObjects"] < 2 {
+	if kc.watchObjectHits["pod"] < 2 {
 		t.Errorf("Not enough WatchObjects calls")
 	}
 }
