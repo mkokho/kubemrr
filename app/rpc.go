@@ -257,13 +257,16 @@ func (mc *MrrClientDefault) Deployments() ([]Deployment, error) {
 
 type TestMirrorClient struct {
 	err         error
+	lastFilter  MrrFilter
+	objects     []KubeObject
 	pods        []Pod
 	services    []Service
 	deployments []Deployment
 }
 
 func (mc *TestMirrorClient) Objects(f MrrFilter) ([]KubeObject, error) {
-	return nil, nil
+	mc.lastFilter = f
+	return mc.objects, mc.err
 }
 
 func (mc *TestMirrorClient) Pods() ([]Pod, error) {

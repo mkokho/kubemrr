@@ -46,38 +46,31 @@ func TestRunGetInvalidArgs(t *testing.T) {
 
 func TestRunGet(t *testing.T) {
 	tc := &TestMirrorClient{
-		pods: []Pod{
-			{ObjectMeta: ObjectMeta{Name: "pod1"}},
-			{ObjectMeta: ObjectMeta{Name: "pod2"}},
-		},
-		services: []Service{
-			{ObjectMeta: ObjectMeta{Name: "service1"}},
-			{ObjectMeta: ObjectMeta{Name: "service2"}},
-		},
-		deployments: []Deployment{
-			{ObjectMeta: ObjectMeta{Name: "deployment1"}},
-			{ObjectMeta: ObjectMeta{Name: "deployment2"}},
+		objects: []KubeObject{
+			{ObjectMeta: ObjectMeta{Name: "o1"}},
+			{ObjectMeta: ObjectMeta{Name: "o2"}},
 		},
 	}
 	buf := bytes.NewBuffer([]byte{})
 	f := &TestFactory{mrrClient: tc, stdOut: buf}
 	cmd := NewGetCommand(f)
 
+	expectedOutput := "o1 o2"
 	tests := []struct {
-		aliases []string
-		output  string
+		aliases        []string
+		expectedFilter MrrFilter
 	}{
 		{
 			aliases: []string{"po", "pod", "pods"},
-			output:  "pod1 pod2",
+			expectedFilter:  MrrFilter{Kind: "pod"},
 		},
 		{
 			aliases: []string{"svc", "service", "services"},
-			output:  "service1 service2",
+			expectedFilter:  MrrFilter{Kind: "service"},
 		},
 		{
 			aliases: []string{"deployment", "deployments"},
-			output:  "deployment1 deployment2",
+			expectedFilter:  MrrFilter{Kind: "deployment"},
 		},
 	}
 
@@ -85,8 +78,11 @@ func TestRunGet(t *testing.T) {
 		for _, alias := range test.aliases {
 			buf.Reset()
 			cmd.Run(cmd, []string{alias})
-			if buf.String() != test.output {
-				t.Errorf("Running [get %v]: output [%v] was not equal to expected [%v]", alias, buf, test.output)
+			if !reflect.DeepEqual(tc.lastFilter, test.expectedFilter) {
+				t.Errorf("Running [get %v]: expected filter %v, got %v", alias, test.expectedFilter, tc.lastFilter)
+			}
+			if buf.String() != expectedOutput {
+				t.Errorf("Running [get %v]: output [%v] was not equal to expected [%v]", alias, buf, expectedOutput)
 			}
 		}
 	}

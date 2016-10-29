@@ -69,11 +69,11 @@ func RunGet(f Factory, cmd *cobra.Command, args []string) (err error) {
 	}
 
 	if strings.HasPrefix(args[0], "p") {
-		err = outputPods(client, f.StdOut())
+		err = outputNames(client, "pod", f.StdOut())
 	} else if strings.HasPrefix(args[0], "s") {
-		err = outputServices(client, f.StdOut())
+		err = outputNames(client, "service", f.StdOut())
 	} else {
-		err = outputDeployments(client, f.StdOut())
+		err = outputNames(client, "deployment", f.StdOut())
 	}
 
 	if err != nil {
@@ -84,52 +84,23 @@ func RunGet(f Factory, cmd *cobra.Command, args []string) (err error) {
 	return nil
 }
 
-func outputPods(client MrrClient, out io.Writer) error {
-	pods, err := client.Pods()
+func outputNames(c MrrClient, kind string, out io.Writer) error {
+	f := MrrFilter{Kind: kind}
+	objects, err := c.Objects(f)
 	if err != nil {
 		return err
 	}
-	log.WithField("pods", pods).Debugf("Got pods")
+	log.
+		WithField("kind", kind).
+		WithField("filter", f).
+		WithField("objects", objects).
+		Debugf("got objects")
 
-	for i, pod := range pods {
+	for i, o := range objects {
 		if i != 0 {
 			out.Write([]byte(" "))
 		}
-		out.Write([]byte(pod.Name))
-	}
-
-	return nil
-}
-
-func outputServices(client MrrClient, out io.Writer) error {
-	services, err := client.Services()
-	if err != nil {
-		return err
-	}
-	log.WithField("services", services).Debugf("Got services")
-
-	for i, svc := range services {
-		if i != 0 {
-			out.Write([]byte(" "))
-		}
-		out.Write([]byte(svc.Name))
-	}
-
-	return nil
-}
-
-func outputDeployments(client MrrClient, out io.Writer) error {
-	deployments, err := client.Deployments()
-	if err != nil {
-		return err
-	}
-	log.WithField("deployments", deployments).Debugf("Got deployments")
-
-	for i, deployment := range deployments {
-		if i != 0 {
-			out.Write([]byte(" "))
-		}
-		out.Write([]byte(deployment.Name))
+		out.Write([]byte(o.Name))
 	}
 
 	return nil
