@@ -13,7 +13,7 @@ import (
 var (
 	cache     *MrrCache
 	mrrClient MrrClient
-	once sync.Once
+	once      sync.Once
 )
 
 func setupRPC() {
@@ -63,16 +63,16 @@ func TestClientObjects(t *testing.T) {
 			filter: MrrFilter{},
 		},
 		{
-			filter: MrrFilter{KubeServer{"server_other"}, "ns1", "pod"},
+			filter: MrrFilter{"server_other", "ns1", "pod"},
 		},
 		{
-			filter: MrrFilter{KubeServer{"server1"}, "ns_other", "pod"},
+			filter: MrrFilter{"server1", "ns_other", "pod"},
 		},
 		{
-			filter: MrrFilter{KubeServer{"server1"}, "ns1", "pod_other"},
+			filter: MrrFilter{"server1", "ns1", "pod_other"},
 		},
 		{
-			filter: MrrFilter{KubeServer{"SERVER1"}, "ns1", "pod"},
+			filter: MrrFilter{"SERVER1", "ns1", "pod"},
 			expected: []KubeObject{
 				{TypeMeta{"pod"}, ObjectMeta{"server1-a", "ns1", ""}},
 				{TypeMeta{"pod"}, ObjectMeta{"server1-b", "ns1", ""}},
@@ -80,7 +80,7 @@ func TestClientObjects(t *testing.T) {
 			},
 		},
 		{
-			filter: MrrFilter{KubeServer{"server2"}, "NS1", "pod"},
+			filter: MrrFilter{"server2", "NS1", "pod"},
 			expected: []KubeObject{
 				{TypeMeta{"pod"}, ObjectMeta{"server2-a", "ns1", ""}},
 				{TypeMeta{"pod"}, ObjectMeta{"server2-b", "ns1", ""}},
@@ -88,7 +88,7 @@ func TestClientObjects(t *testing.T) {
 			},
 		},
 		{
-			filter: MrrFilter{KubeServer{"server1"}, "ns2", "POD"},
+			filter: MrrFilter{"server1", "ns2", "POD"},
 			expected: []KubeObject{
 				{TypeMeta{"pod"}, ObjectMeta{"server1-a", "ns2", ""}},
 				{TypeMeta{"pod"}, ObjectMeta{"server1-b", "ns2", ""}},
@@ -96,7 +96,7 @@ func TestClientObjects(t *testing.T) {
 			},
 		},
 		{
-			filter: MrrFilter{KubeServer{"server1"}, "ns1", "service"},
+			filter: MrrFilter{"server1", "ns1", "service"},
 			expected: []KubeObject{
 				{TypeMeta{"service"}, ObjectMeta{"server1-a", "ns1", ""}},
 				{TypeMeta{"service"}, ObjectMeta{"server1-b", "ns1", ""}},
@@ -104,7 +104,7 @@ func TestClientObjects(t *testing.T) {
 			},
 		},
 		{
-			filter: MrrFilter{KubeServer{"server1"}, "ns1", "deployment"},
+			filter: MrrFilter{"server1", "ns1", "deployment"},
 			expected: []KubeObject{
 				{TypeMeta{"deployment"}, ObjectMeta{"server1-a", "ns1", ""}},
 				{TypeMeta{"deployment"}, ObjectMeta{"server1-b", "ns1", ""}},
@@ -112,7 +112,7 @@ func TestClientObjects(t *testing.T) {
 			},
 		},
 		{
-			filter: MrrFilter{KubeServer{}, "ns1", "pod"},
+			filter: MrrFilter{"", "ns1", "pod"},
 			expected: []KubeObject{
 				{TypeMeta{"pod"}, ObjectMeta{"server1-a", "ns1", ""}},
 				{TypeMeta{"pod"}, ObjectMeta{"server1-b", "ns1", ""}},
@@ -126,7 +126,7 @@ func TestClientObjects(t *testing.T) {
 			},
 		},
 		{
-			filter: MrrFilter{KubeServer{"server1"}, "", "pod"},
+			filter: MrrFilter{"server1", "", "pod"},
 			expected: []KubeObject{
 				{TypeMeta{"pod"}, ObjectMeta{"server1-a", "ns1", ""}},
 				{TypeMeta{"pod"}, ObjectMeta{"server1-b", "ns1", ""}},

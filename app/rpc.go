@@ -9,7 +9,7 @@ import (
 )
 
 type MrrFilter struct {
-	Server    KubeServer
+	Server    string
 	Namespace string
 	Kind      string
 }
@@ -43,7 +43,7 @@ func (c *MrrCache) Objects(f *MrrFilter, os *[]KubeObject) error {
 
 	keys := []KubeServer{}
 	for k, _ := range c.objects {
-		if f.Server.URL == "" || strings.EqualFold(f.Server.URL, k.URL) {
+		if f.Server == "" || strings.EqualFold(f.Server, k.URL) {
 			keys = append(keys, k)
 		}
 	}
@@ -115,7 +115,7 @@ func (c *MrrCache) deleteKubeObject(server KubeServer, o KubeObject) {
 	}
 
 	if idx >= 0 {
-		os = append(os[:idx], os[idx + 1:]...)
+		os = append(os[:idx], os[idx+1:]...)
 		c.objects[server] = os
 	}
 }
