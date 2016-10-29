@@ -13,7 +13,7 @@ import (
 var (
 	cache     *MrrCache
 	mrrClient MrrClient
-	once      sync.Once
+	once sync.Once
 )
 
 func setupRPC() {
@@ -72,7 +72,7 @@ func TestClientObjects(t *testing.T) {
 			filter: MrrFilter{KubeServer{"server1"}, "ns1", "pod_other"},
 		},
 		{
-			filter: MrrFilter{KubeServer{"server1"}, "ns1", "pod"},
+			filter: MrrFilter{KubeServer{"SERVER1"}, "ns1", "pod"},
 			expected: []KubeObject{
 				{TypeMeta{"pod"}, ObjectMeta{"server1-a", "ns1", ""}},
 				{TypeMeta{"pod"}, ObjectMeta{"server1-b", "ns1", ""}},
@@ -80,7 +80,7 @@ func TestClientObjects(t *testing.T) {
 			},
 		},
 		{
-			filter: MrrFilter{KubeServer{"server2"}, "ns1", "pod"},
+			filter: MrrFilter{KubeServer{"server2"}, "NS1", "pod"},
 			expected: []KubeObject{
 				{TypeMeta{"pod"}, ObjectMeta{"server2-a", "ns1", ""}},
 				{TypeMeta{"pod"}, ObjectMeta{"server2-b", "ns1", ""}},
@@ -88,7 +88,7 @@ func TestClientObjects(t *testing.T) {
 			},
 		},
 		{
-			filter: MrrFilter{KubeServer{"server1"}, "ns2", "pod"},
+			filter: MrrFilter{KubeServer{"server1"}, "ns2", "POD"},
 			expected: []KubeObject{
 				{TypeMeta{"pod"}, ObjectMeta{"server1-a", "ns2", ""}},
 				{TypeMeta{"pod"}, ObjectMeta{"server1-b", "ns2", ""}},

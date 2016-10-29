@@ -1,10 +1,11 @@
 package app
 
 import (
-	"net/rpc"
-	"sync"
 	"errors"
 	log "github.com/Sirupsen/logrus"
+	"net/rpc"
+	"strings"
+	"sync"
 )
 
 type MrrFilter struct {
@@ -42,7 +43,7 @@ func (c *MrrCache) Objects(f *MrrFilter, os *[]KubeObject) error {
 
 	keys := []KubeServer{}
 	for k, _ := range c.objects {
-		if f.Server.URL == "" || f.Server.URL == k.URL {
+		if f.Server.URL == "" || strings.EqualFold(f.Server.URL, k.URL) {
 			keys = append(keys, k)
 		}
 	}
@@ -54,7 +55,8 @@ func (c *MrrCache) Objects(f *MrrFilter, os *[]KubeObject) error {
 	res := []KubeObject{}
 	for _, k := range keys {
 		for _, o := range c.objects[k] {
-			if o.Kind == f.Kind && (f.Namespace == "" || o.Namespace == f.Namespace) {
+			if strings.EqualFold(o.Kind, f.Kind) &&
+				(f.Namespace == "" || strings.EqualFold(o.Namespace, f.Namespace)) {
 				res = append(res, o)
 			}
 		}
@@ -113,7 +115,7 @@ func (c *MrrCache) deleteKubeObject(server KubeServer, o KubeObject) {
 	}
 
 	if idx >= 0 {
-		os = append(os[:idx], os[idx+1:]...)
+		os = append(os[:idx], os[idx + 1:]...)
 		c.objects[server] = os
 	}
 }
@@ -142,9 +144,9 @@ func (mc *MrrClientDefault) Objects(f MrrFilter) ([]KubeObject, error) {
 }
 
 type TestMirrorClient struct {
-	err         error
-	lastFilter  MrrFilter
-	objects     []KubeObject
+	err        error
+	lastFilter MrrFilter
+	objects    []KubeObject
 }
 
 func (mc *TestMirrorClient) Objects(f MrrFilter) ([]KubeObject, error) {
