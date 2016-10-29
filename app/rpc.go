@@ -15,20 +15,14 @@ type MrrFilter struct {
 }
 
 type MrrCache struct {
-	objects     map[KubeServer][]KubeObject
-	pods        map[string]*Pod
-	services    map[string]*Service
-	deployments map[string]*Deployment
-	mu          *sync.RWMutex
+	objects map[KubeServer][]KubeObject
+	mu      *sync.RWMutex
 }
 
 func NewMrrCache() *MrrCache {
 	c := &MrrCache{}
 	c.mu = &sync.RWMutex{}
 	c.objects = make(map[KubeServer][]KubeObject)
-	c.pods = map[string]*Pod{}
-	c.services = map[string]*Service{}
-	c.deployments = map[string]*Deployment{}
 	return c
 }
 
@@ -64,13 +58,6 @@ func (c *MrrCache) Objects(f *MrrFilter, os *[]KubeObject) error {
 	log.WithField("filter", f).WithField("objects", res).Debug("Returning result for objects")
 	*os = res
 	return nil
-}
-
-func (c *MrrCache) setKubeObjects(server KubeServer, xs []KubeObject) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	c.objects[server] = xs
 }
 
 func (c *MrrCache) updateKubeObject(server KubeServer, o KubeObject) {
