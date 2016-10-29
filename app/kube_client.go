@@ -25,7 +25,6 @@ type ObjectEvent struct {
 }
 
 type KubeClient interface {
-	BaseURL() *url.URL
 	Server() KubeServer
 	WatchObjects(kind string, out chan *ObjectEvent) error
 }
@@ -43,10 +42,6 @@ func NewKubeClient(url *url.URL) KubeClient {
 	return c
 }
 
-func (kc *DefaultKubeClient) BaseURL() *url.URL {
-	return kc.baseURL
-}
-
 func (kc *DefaultKubeClient) Server() KubeServer {
 	return KubeServer{kc.baseURL.String()}
 }
@@ -54,17 +49,17 @@ func (kc *DefaultKubeClient) Server() KubeServer {
 func (kc *DefaultKubeClient) WatchObjects(kind string, out chan *ObjectEvent) error {
 	switch kind {
 	case "pod":
-		return kc.Watch("api/v1/pods?watch=true", out)
+		return kc.watch("api/v1/pods?watch=true", out)
 	case "service":
-		return kc.Watch("api/v1/services?watch=true", out)
+		return kc.watch("api/v1/services?watch=true", out)
 	case "deployment":
-		return kc.Watch("/apis/extensions/v1beta1/deployments?watch=true", out)
+		return kc.watch("/apis/extensions/v1beta1/deployments?watch=true", out)
 	default:
 		return fmt.Errorf("unsupported kind: %s", kind)
 	}
 }
 
-func (kc *DefaultKubeClient) Watch(url string, out chan *ObjectEvent) error {
+func (kc *DefaultKubeClient) watch(url string, out chan *ObjectEvent) error {
 	req, err := kc.newRequest("GET", url, nil)
 	if err != nil {
 		return err
@@ -147,10 +142,6 @@ func NewTestKubeClient() *TestKubeClient {
 
 func (kc *TestKubeClient) Server() KubeServer {
 	return KubeServer{kc.baseURL.String()}
-}
-
-func (kc *TestKubeClient) BaseURL() *url.URL {
-	return kc.baseURL
 }
 
 func (kc *TestKubeClient) WatchObjects(kind string, out chan *ObjectEvent) error {
