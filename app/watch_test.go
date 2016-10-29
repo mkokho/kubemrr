@@ -74,10 +74,10 @@ func TestLoopWatchObjectsFailure(t *testing.T) {
 	kc := NewTestKubeClient()
 	kc.watchObjectError = errors.New("Test Error")
 
-	loopWatchObjects(c, kc, "pod")
+	loopWatchObjects(c, kc, "o")
 
 	time.Sleep(10 * time.Millisecond)
-	if kc.watchObjectHits["pod"] < 2 {
+	if kc.watchObjectHits["o"] < 2 {
 		t.Errorf("Not enough WatchObjects calls")
 	}
 }
@@ -95,7 +95,7 @@ func TestLoopWatchObjects(t *testing.T) {
 		{Deleted, &KubeObject{ObjectMeta: ObjectMeta{Name: "z"}}},
 	}
 
-	loopWatchObjects(c, kc, "pod")
+	loopWatchObjects(c, kc, "o")
 	time.Sleep(10 * time.Millisecond)
 
 	//order matters in slice
