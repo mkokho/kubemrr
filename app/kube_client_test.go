@@ -142,7 +142,7 @@ func TestWatchDeployments(t *testing.T) {
 	)
 
 	inEvents := make(chan *ObjectEvent, 10)
-	err := client.WatchObjects("deployments", inEvents)
+	err := client.WatchObjects("deployment", inEvents)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}

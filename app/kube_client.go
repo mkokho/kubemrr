@@ -57,7 +57,7 @@ func (kc *DefaultKubeClient) WatchObjects(kind string, out chan *ObjectEvent) er
 		return kc.Watch("api/v1/pods?watch=true", out)
 	case "service":
 		return kc.Watch("api/v1/services?watch=true", out)
-	case "deployments":
+	case "deployment":
 		return kc.Watch("/apis/extensions/v1beta1/deployments?watch=true", out)
 	default:
 		return fmt.Errorf("unsupported kind: %s", kind)
