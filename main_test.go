@@ -3,11 +3,11 @@ package main
 import (
 	"bytes"
 	"github.com/mkokho/kubemrr/app"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+	log "github.com/Sirupsen/logrus"
 )
 
 var (
@@ -16,15 +16,41 @@ var (
 	mux        *http.ServeMux
 )
 
+func TestMain(m *testing.M) {
+	log.SetLevel(log.DebugLevel)
+	log.SetFormatter(&log.TextFormatter{})
+	m.Run()
+}
+
+func stream(w http.ResponseWriter, items []string) {
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		panic("need flusher!")
+	}
+
+	w.Header().Set("Transfer-Encoding", "chunked")
+	w.WriteHeader(http.StatusOK)
+	flusher.Flush()
+
+	for _, item := range items {
+		_, err := w.Write([]byte(item))
+		if err != nil {
+			panic(err)
+		}
+		flusher.Flush()
+	}
+	time.Sleep(50 * time.Millisecond)
+}
+
 func k8sPods(w http.ResponseWriter, r *http.Request) {
-	io.WriteString(w, `{"type": "ADDED", "object": {"metadata": {"name": "pod1"}}}`)
+	stream(w, []string{`{"type": "ADDED", "object": {"kind":"pod", "metadata": {"name": "pod1"}}}`})
 }
 
 func k8sServices(w http.ResponseWriter, r *http.Request) {
-	io.WriteString(w, `{"type": "ADDED", "object": {"metadata": {"name": "service1"}}}`)
+	stream(w, []string{`{"type": "ADDED", "object": {"kind":"service", "metadata": {"name": "service1"}}}`})
 }
 func k8sDeployments(w http.ResponseWriter, r *http.Request) {
-	io.WriteString(w, `{"type": "ADDED", "object": {"metadata": {"name": "deployment1"}}}`)
+	stream(w, []string{`{"type": "ADDED", "object": {"kind":"deployment", "metadata": {"name": "deployment1"}}}`})
 }
 
 func startKubernetesServer() {
