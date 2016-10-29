@@ -39,16 +39,23 @@ func (c *MrrCache) Objects(f *MrrFilter, os *[]KubeObject) error {
 		return errors.New("Cannot find pods with nil filter")
 	}
 
-	_, ok := c.objects[f.Server]
-	if !ok {
+	keys := []KubeServer{}
+	for k, _ := range c.objects {
+		if f.Server.URL == "" || f.Server.URL == k.URL {
+			keys = append(keys, k)
+		}
+	}
+	if len(keys) == 0 {
 		log.Infof("Cache does not know server %v", f.Server)
 		return nil
 	}
 
 	res := []KubeObject{}
-	for _, o := range c.objects[f.Server] {
-		if o.Namespace == f.Namespace && o.Kind == f.Kind {
-			res = append(res, o)
+	for _, k := range keys {
+		for _, o := range c.objects[k] {
+			if o.Kind == f.Kind && (f.Namespace == "" || o.Namespace == f.Namespace) {
+				res = append(res, o)
+			}
 		}
 	}
 	*os = res

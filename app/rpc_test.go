@@ -40,12 +40,12 @@ func fillCache(c *MrrCache) {
 			for _, kind := range []string{"pod", "service", "deployment"} {
 				for _, name := range []string{"a", "b", "c"} {
 					ks := KubeServer{s}
-					if cache.objects[ks] == nil {
-						cache.objects[ks] = make([]KubeObject, 27)
+					if c.objects[ks] == nil {
+						c.objects[ks] = make([]KubeObject, 0)
 					}
 
 					o := KubeObject{TypeMeta{kind}, ObjectMeta{Name: s + "-" + name, Namespace: ns}}
-					cache.objects[ks] = append(cache.objects[ks], o)
+					c.objects[ks] = append(c.objects[ks], o)
 				}
 			}
 		}
@@ -109,6 +109,34 @@ func TestClientObjects(t *testing.T) {
 				{TypeMeta{"deployment"}, ObjectMeta{"server1-a", "ns1", ""}},
 				{TypeMeta{"deployment"}, ObjectMeta{"server1-b", "ns1", ""}},
 				{TypeMeta{"deployment"}, ObjectMeta{"server1-c", "ns1", ""}},
+			},
+		},
+		{
+			filter: MrrFilter{KubeServer{}, "ns1", "pod"},
+			expected: []KubeObject{
+				{TypeMeta{"pod"}, ObjectMeta{"server1-a", "ns1", ""}},
+				{TypeMeta{"pod"}, ObjectMeta{"server1-b", "ns1", ""}},
+				{TypeMeta{"pod"}, ObjectMeta{"server1-c", "ns1", ""}},
+				{TypeMeta{"pod"}, ObjectMeta{"server2-a", "ns1", ""}},
+				{TypeMeta{"pod"}, ObjectMeta{"server2-b", "ns1", ""}},
+				{TypeMeta{"pod"}, ObjectMeta{"server2-c", "ns1", ""}},
+				{TypeMeta{"pod"}, ObjectMeta{"server3-a", "ns1", ""}},
+				{TypeMeta{"pod"}, ObjectMeta{"server3-b", "ns1", ""}},
+				{TypeMeta{"pod"}, ObjectMeta{"server3-c", "ns1", ""}},
+			},
+		},
+		{
+			filter: MrrFilter{KubeServer{"server1"}, "", "pod"},
+			expected: []KubeObject{
+				{TypeMeta{"pod"}, ObjectMeta{"server1-a", "ns1", ""}},
+				{TypeMeta{"pod"}, ObjectMeta{"server1-b", "ns1", ""}},
+				{TypeMeta{"pod"}, ObjectMeta{"server1-c", "ns1", ""}},
+				{TypeMeta{"pod"}, ObjectMeta{"server1-a", "ns2", ""}},
+				{TypeMeta{"pod"}, ObjectMeta{"server1-b", "ns2", ""}},
+				{TypeMeta{"pod"}, ObjectMeta{"server1-c", "ns2", ""}},
+				{TypeMeta{"pod"}, ObjectMeta{"server1-a", "ns3", ""}},
+				{TypeMeta{"pod"}, ObjectMeta{"server1-b", "ns3", ""}},
+				{TypeMeta{"pod"}, ObjectMeta{"server1-c", "ns3", ""}},
 			},
 		},
 	}
