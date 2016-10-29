@@ -86,9 +86,9 @@ func loopWatchObjects(c *MrrCache, kc KubeClient, kind string) {
 			select {
 			case e := <-events:
 				l.
-				WithField("name", e.Object.Name).
-				WithField("type", e.Type).
-				Info("received event")
+					WithField("name", e.Object.Name).
+					WithField("type", e.Type).
+					Info("received event")
 				switch e.Type {
 				case Deleted:
 					c.deleteKubeObject(kc.Server(), *e.Object)
