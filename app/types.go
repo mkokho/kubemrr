@@ -10,33 +10,9 @@ type TypeMeta struct {
 	Kind string `json:"kind,omitempty"`
 }
 
-type Service struct {
-	ObjectMeta `json:"metadata,omitempty"`
-}
-
-type Pod struct {
-	ObjectMeta `json:"metadata,omitempty"`
-}
-
-type Deployment struct {
-	ObjectMeta `json:"metadata,omitempty"`
-}
-
 type KubeObject struct {
 	TypeMeta   `json:",inline"`
 	ObjectMeta `json:"metadata,omitempty"`
-}
-
-func (p *Pod) untype() KubeObject {
-	return KubeObject{TypeMeta{"pod"}, p.ObjectMeta}
-}
-
-func (p *Service) untype() KubeObject {
-	return KubeObject{TypeMeta{"service"}, p.ObjectMeta}
-}
-
-func (p *Deployment) untype() KubeObject {
-	return KubeObject{TypeMeta{"deployment"}, p.ObjectMeta}
 }
 
 //KubeServer represents a Kubernetes API server which we ask for information
