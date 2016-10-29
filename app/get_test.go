@@ -61,16 +61,16 @@ func TestRunGet(t *testing.T) {
 		expectedFilter MrrFilter
 	}{
 		{
-			aliases: []string{"po", "pod", "pods"},
-			expectedFilter:  MrrFilter{Kind: "pod"},
+			aliases:        []string{"po", "pod", "pods"},
+			expectedFilter: MrrFilter{Kind: "pod"},
 		},
 		{
-			aliases: []string{"svc", "service", "services"},
-			expectedFilter:  MrrFilter{Kind: "service"},
+			aliases:        []string{"svc", "service", "services"},
+			expectedFilter: MrrFilter{Kind: "service"},
 		},
 		{
-			aliases: []string{"deployment", "deployments"},
-			expectedFilter:  MrrFilter{Kind: "deployment"},
+			aliases:        []string{"deployment", "deployments"},
+			expectedFilter: MrrFilter{Kind: "deployment"},
 		},
 	}
 
@@ -156,5 +156,24 @@ func TestParseKubeConfig(t *testing.T) {
 	if !reflect.DeepEqual(expected, actual) {
 		t.Errorf("Expected %+v, got %+v", expected, actual)
 	}
+}
 
+func TestConfigMakeFilter(t *testing.T) {
+	conf := Config{
+		CurrentContext: "prod",
+		Contexts: []ContextWrap{
+			{"dev", Context{"cluster_2", "red"}},
+			{"prod", Context{"cluster_1", "blue"}},
+		},
+		Clusters: []ClusterWrap{
+			{"cluster_1", Cluster{"https://foo.com"}},
+			{"cluster_2", Cluster{"https://bar.com"}},
+		},
+	}
+
+	expected := MrrFilter{Server: "https://foo.com", Namespace: "blue"}
+	actual := conf.makeFilter()
+	if !reflect.DeepEqual(expected, actual) {
+		t.Errorf("Expected %+v, got %+v", expected, actual)
+	}
 }

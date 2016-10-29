@@ -45,3 +45,26 @@ type ContextWrap struct {
 	Name    string  `json:"name"`
 	Context Context `yaml:"context"`
 }
+
+func (c *Config) makeFilter() MrrFilter {
+	var context Context
+	for i := range c.Contexts {
+		if c.Contexts[i].Name == c.CurrentContext {
+			context = c.Contexts[i].Context
+			break
+		}
+	}
+
+	var cluster Cluster
+	for i := range c.Clusters {
+		if c.Clusters[i].Name == context.Cluster {
+			cluster = c.Clusters[i].Cluster
+			break
+		}
+	}
+
+	return MrrFilter{
+		Namespace: context.Namespace,
+		Server:    cluster.Server,
+	}
+}
