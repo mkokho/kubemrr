@@ -4,12 +4,15 @@ import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/rpc"
 	"net/url"
 	"os"
+	"os/user"
 )
 
 func AddCommonFlags(cmd *cobra.Command) {
@@ -46,17 +49,20 @@ type Factory interface {
 	MrrClient(bind string) (MrrClient, error)
 	MrrCache() *MrrCache
 	Serve(l net.Listener, c *MrrCache) error
+	HomeKubeconfig() (Config, error)
 	StdOut() io.Writer
 	StdErr() io.Writer
 }
 
 type DefaultFactory struct {
-	stdOut io.Writer
+	kubeconfig *Config
+	stdOut     io.Writer
 }
 
-func NewFactory(stdOut io.Writer) Factory {
+func NewFactory(stdOut io.Writer, kubeconfig *Config) Factory {
 	return &DefaultFactory{
-		stdOut: stdOut,
+		stdOut:     stdOut,
+		kubeconfig: kubeconfig,
 	}
 }
 
@@ -90,10 +96,38 @@ func (f *DefaultFactory) Serve(l net.Listener, cache *MrrCache) error {
 	return http.Serve(l, nil)
 }
 
+func (f *DefaultFactory) HomeKubeconfig() (Config, error) {
+	if f.kubeconfig != nil {
+		return *f.kubeconfig, nil
+	}
+
+	usr, err := user.Current()
+	if err != nil {
+		return Config{}, err
+	}
+	return parseKubeConfig(usr.HomeDir + "/.kube/config")
+}
+
+func parseKubeConfig(filename string) (Config, error) {
+	res := Config{}
+	raw, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return res, fmt.Errorf("could not read file %s: %s", filename, err)
+	}
+
+	err = yaml.Unmarshal(raw, &res)
+	if err != nil {
+		return res, fmt.Errorf("could not parse file %s: %s", filename, err)
+	}
+
+	return res, nil
+}
+
 type TestFactory struct {
 	mrrClient   MrrClient
 	mrrCache    *MrrCache
 	kubeClients map[string]*TestKubeClient
+	kubeconfig  Config
 	stdOut      io.Writer
 	stdErr      io.Writer
 }
@@ -130,6 +164,10 @@ func (f *TestFactory) MrrCache() *MrrCache {
 
 func (f *TestFactory) Serve(l net.Listener, cache *MrrCache) error {
 	return nil
+}
+
+func (f *TestFactory) HomeKubeconfig() (Config, error) {
+	return f.kubeconfig, nil
 }
 
 func (f *TestFactory) KubeClient(url *url.URL) KubeClient {

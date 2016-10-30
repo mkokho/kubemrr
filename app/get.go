@@ -4,9 +4,7 @@ import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 	"io"
-	"io/ioutil"
 	"regexp"
 	"strings"
 )
@@ -61,6 +59,12 @@ func RunGet(f Factory, cmd *cobra.Command, args []string) (err error) {
 		return nil
 	}
 
+	conf, err := f.HomeKubeconfig()
+	if err != nil {
+		fmt.Fprintf(f.StdErr(), "Could not read kubeconfig: %s\n", err)
+		return nil
+	}
+
 	bind := GetBind(cmd)
 	client, err := f.MrrClient(bind)
 	if err != nil {
@@ -69,11 +73,11 @@ func RunGet(f Factory, cmd *cobra.Command, args []string) (err error) {
 	}
 
 	if strings.HasPrefix(args[0], "p") {
-		err = outputNames(client, "pod", f.StdOut())
+		err = outputNames(client, makeFilterFor("pod", &conf), f.StdOut())
 	} else if strings.HasPrefix(args[0], "s") {
-		err = outputNames(client, "service", f.StdOut())
+		err = outputNames(client, makeFilterFor("service", &conf), f.StdOut())
 	} else {
-		err = outputNames(client, "deployment", f.StdOut())
+		err = outputNames(client, makeFilterFor("deployment", &conf), f.StdOut())
 	}
 
 	if err != nil {
@@ -84,14 +88,21 @@ func RunGet(f Factory, cmd *cobra.Command, args []string) (err error) {
 	return nil
 }
 
-func outputNames(c MrrClient, kind string, out io.Writer) error {
-	f := MrrFilter{Kind: kind}
+func makeFilterFor(kind string, conf *Config) MrrFilter {
+	f := MrrFilter{}
+	if conf != nil {
+		f = conf.makeFilter()
+	}
+	f.Kind = kind
+	return f
+}
+
+func outputNames(c MrrClient, f MrrFilter, out io.Writer) error {
 	objects, err := c.Objects(f)
 	if err != nil {
 		return err
 	}
 	log.
-		WithField("kind", kind).
 		WithField("filter", f).
 		WithField("objects", objects).
 		Debugf("got objects")
@@ -104,19 +115,4 @@ func outputNames(c MrrClient, kind string, out io.Writer) error {
 	}
 
 	return nil
-}
-
-func parseKubeConfig(filename string) (Config, error) {
-	res := Config{}
-	raw, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return res, fmt.Errorf("could not read file %s: %s", filename, err)
-	}
-
-	err = yaml.Unmarshal(raw, &res)
-	if err != nil {
-		return res, fmt.Errorf("could not parse file %s: %s", filename, err)
-	}
-
-	return res, nil
 }

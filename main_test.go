@@ -2,12 +2,12 @@ package main
 
 import (
 	"bytes"
+	log "github.com/Sirupsen/logrus"
 	"github.com/mkokho/kubemrr/app"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
-	log "github.com/Sirupsen/logrus"
 )
 
 var (
@@ -72,7 +72,7 @@ func TestCommands(t *testing.T) {
 	defer stopKubernetesServer()
 
 	buf := bytes.NewBuffer([]byte{})
-	f := app.NewFactory(buf)
+	f := app.NewFactory(buf, &app.Config{})
 	getCmd := app.NewGetCommand(f)
 	watchCmd := app.NewWatchCommand(f)
 	go watchCmd.Run(watchCmd, []string{k8sAddress})
