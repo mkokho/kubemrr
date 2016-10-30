@@ -30,6 +30,7 @@ func init() {
 	f := &app.DefaultFactory{}
 	RootCmd.AddCommand(app.NewGetCommand(f))
 	RootCmd.AddCommand(app.NewWatchCommand(f))
+	RootCmd.AddCommand(app.NewVersionCommand(f))
 }
 
 func main() {
