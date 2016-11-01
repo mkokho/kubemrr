@@ -33,6 +33,7 @@ This is enought to make autocompletion works fast.
 	}
 
 	AddCommonFlags(cmd)
+	cmd.Flags().String("kubectl-command", "kubectl", "Command typed in the prompt. Use to pass kubectl arguments")
 	return cmd
 }
 
@@ -65,6 +66,8 @@ func RunGet(f Factory, cmd *cobra.Command, args []string) (err error) {
 		return nil
 	}
 
+	kubectlFlags := parseKubectlFlags(getKubectlFlags(cmd))
+
 	bind := GetBind(cmd)
 	client, err := f.MrrClient(bind)
 	if err != nil {
@@ -73,11 +76,11 @@ func RunGet(f Factory, cmd *cobra.Command, args []string) (err error) {
 	}
 
 	if strings.HasPrefix(args[0], "p") {
-		err = outputNames(client, makeFilterFor("pod", &conf), f.StdOut())
+		err = outputNames(client, makeFilterFor("pod", &conf, kubectlFlags), f.StdOut())
 	} else if strings.HasPrefix(args[0], "s") {
-		err = outputNames(client, makeFilterFor("service", &conf), f.StdOut())
+		err = outputNames(client, makeFilterFor("service", &conf, kubectlFlags), f.StdOut())
 	} else {
-		err = outputNames(client, makeFilterFor("deployment", &conf), f.StdOut())
+		err = outputNames(client, makeFilterFor("deployment", &conf, kubectlFlags), f.StdOut())
 	}
 
 	if err != nil {
@@ -88,10 +91,41 @@ func RunGet(f Factory, cmd *cobra.Command, args []string) (err error) {
 	return nil
 }
 
-func makeFilterFor(kind string, conf *Config) MrrFilter {
+func getKubectlFlags(cmd *cobra.Command) string {
+	r, err := cmd.Flags().GetString("kubectl-command")
+	if err != nil {
+		log.Fatal(err)
+	}
+	return r
+}
+
+type KubectlFlags struct {
+	namespace string
+	context   string
+	cluster   string
+}
+
+var (
+	namespaceFlagRegex = regexp.MustCompile(`--namespace[ =]([\w]+)`)
+)
+
+func parseKubectlFlags(in string) *KubectlFlags {
+	res := KubectlFlags{}
+	namespaces := namespaceFlagRegex.FindAllStringSubmatch(in, -1)
+	for i := range namespaces {
+		res.namespace = namespaces[i][1]
+	}
+	log.WithField("in", in).WithField("out", res).Debug("Parsed kubectl flags")
+	return &res
+}
+
+func makeFilterFor(kind string, conf *Config, flags *KubectlFlags) MrrFilter {
 	f := MrrFilter{}
 	if conf != nil {
 		f = conf.makeFilter()
+	}
+	if flags != nil {
+		f.Namespace = flags.namespace
 	}
 	f.Kind = kind
 	return f

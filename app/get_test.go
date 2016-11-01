@@ -88,6 +88,42 @@ func TestRunGet(t *testing.T) {
 	}
 }
 
+func TestRunGetWithKubectlCommand(t *testing.T) {
+	tc := &TestMirrorClient{}
+	f := &TestFactory{mrrClient: tc}
+	cmd := NewGetCommand(f)
+
+	tests := []struct {
+		kubectlCmd     string
+		expectedFilter MrrFilter
+	}{
+		{
+			kubectlCmd:     "--namespace=ns1",
+			expectedFilter: MrrFilter{Namespace: "ns1", Kind: "pod"},
+		},
+		{
+			kubectlCmd:     "--namespace ns1",
+			expectedFilter: MrrFilter{Namespace: "ns1", Kind: "pod"},
+		},
+		{
+			kubectlCmd:     " t --namespace ns1 t --namespace=ns2 t",
+			expectedFilter: MrrFilter{Namespace: "ns2", Kind: "pod"},
+		},
+		{
+			kubectlCmd:     "--namespace=ns1",
+			expectedFilter: MrrFilter{Namespace: "ns1", Kind: "pod"},
+		},
+	}
+
+	for i, test := range tests {
+		cmd.Flags().Set("kubectl-command", test.kubectlCmd)
+		cmd.Run(cmd, []string{"po"})
+		if !reflect.DeepEqual(tc.lastFilter, test.expectedFilter) {
+			t.Errorf("Test %d: expected filter %v, got %v", i, test.expectedFilter, tc.lastFilter)
+		}
+	}
+}
+
 func TestRunGetClientError(t *testing.T) {
 	tc := &TestMirrorClient{
 		err: fmt.Errorf("TestFailure"),
