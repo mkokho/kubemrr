@@ -95,7 +95,7 @@ func TestRunGetWithKubectlFlags(t *testing.T) {
 		CurrentContext: "c1",
 		Contexts: []ContextWrap{
 			{"c1", Context{"cluster_1", "ns1"}},
-			{"c2", Context{"cluster_2", "ns2"}},
+			{"c-2", Context{"cluster_2", "ns2"}},
 		},
 		Clusters: []ClusterWrap{
 			{"cluster_1", Cluster{"x1.com"}},
@@ -111,8 +111,8 @@ func TestRunGetWithKubectlFlags(t *testing.T) {
 		expectedServer    string
 	}{
 		{
-			kubectlCmd:        "--namespace=ns1",
-			expectedNamespace: "ns1",
+			kubectlCmd:        "--namespace=ns-1",
+			expectedNamespace: "ns-1",
 		},
 		{
 			kubectlCmd:        "--namespace ns1",
@@ -135,17 +135,17 @@ func TestRunGetWithKubectlFlags(t *testing.T) {
 			expectedServer: "s2",
 		},
 		{
-			kubectlCmd:        "--context=c2",
+			kubectlCmd:        "--context=c-2",
 			expectedNamespace: "ns2",
 			expectedServer:    "x2.com",
 		},
 		{
-			kubectlCmd:        "--context c2",
+			kubectlCmd:        "--context c-2",
 			expectedNamespace: "ns2",
 			expectedServer:    "x2.com",
 		},
 		{
-			kubectlCmd:        " c --context c1 x --context c2 c",
+			kubectlCmd:        " c --context c1 x --context c-2 c",
 			expectedNamespace: "ns2",
 			expectedServer:    "x2.com",
 		},

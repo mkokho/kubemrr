@@ -113,10 +113,10 @@ type KubectlFlags struct {
 }
 
 var (
-	namespaceFlagRegex = regexp.MustCompile(`--namespace[ =]([\w]+)`)
+	namespaceFlagRegex = regexp.MustCompile(`--namespace[ =]([\S]+)`)
 	serverFlagRegex    = regexp.MustCompile(`--server[ =]([\S]+)`)
-	contextFlagRegex   = regexp.MustCompile(`--context[ =]([\w]+)`)
-	clusterFlagRegex   = regexp.MustCompile(`--cluster[ =]([\w]+)`)
+	contextFlagRegex   = regexp.MustCompile(`--context[ =]([\S]+)`)
+	clusterFlagRegex   = regexp.MustCompile(`--cluster[ =]([\S]+)`)
 )
 
 func parseKubectlFlags(in string) *KubectlFlags {
