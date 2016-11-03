@@ -37,7 +37,7 @@ func (c *MrrCache) Objects(f *MrrFilter, os *[]KubeObject) error {
 
 	keys := []KubeServer{}
 	for k, _ := range c.objects {
-		if f.Server == "" || strings.EqualFold(f.Server, k.URL) {
+		if f.Server == "" || strings.EqualFold(trimPort(f.Server), trimPort(k.URL)) {
 			keys = append(keys, k)
 		}
 	}
@@ -104,6 +104,15 @@ func (c *MrrCache) deleteKubeObject(server KubeServer, o KubeObject) {
 	if idx >= 0 {
 		os = append(os[:idx], os[idx+1:]...)
 		c.objects[server] = os
+	}
+}
+
+func trimPort(url string) string {
+	i := strings.LastIndex(url, ":")
+	if i == -1 {
+		return url
+	} else {
+		return url[:i]
 	}
 }
 

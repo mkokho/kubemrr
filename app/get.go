@@ -155,7 +155,7 @@ func makeFilterFor(kind string, conf *Config, flags *KubectlFlags) MrrFilter {
 			f.Namespace = flags.namespace
 		}
 		if flags.cluster != "" {
-			f.Server = conf.getCluster(flags.cluster).urlWithoutPort()
+			f.Server = conf.getCluster(flags.cluster).Server
 		}
 		if flags.server != "" {
 			f.Server = flags.server
