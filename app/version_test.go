@@ -11,7 +11,8 @@ func TestRunVersion(t *testing.T) {
 	cmd := NewVersionCommand(f)
 	cmd.Run(cmd, []string{})
 
-	if buf.String() != "0.6" {
-		t.Errorf("Expected verion 0.6, got %s", buf.String())
+	expected := "kubemrr-0.6.0"
+	if buf.String() != expected {
+		t.Errorf("Expected verion %s, got %s", expected, buf.String())
 	}
 }
