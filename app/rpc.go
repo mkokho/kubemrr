@@ -109,7 +109,7 @@ func (c *MrrCache) deleteKubeObject(server KubeServer, o KubeObject) {
 
 func trimPort(url string) string {
 	i := strings.LastIndex(url, ":")
-	if i == -1 {
+	if i < 7 {
 		return url
 	} else {
 		return url[:i]
