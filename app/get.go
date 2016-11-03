@@ -19,6 +19,7 @@ Ask mirror of Kubernetes API server for resources.
 Supported resources are:
   - po, pod, pod
   - svc, service, services
+  - deployment, deployments
 
 Currently it outputs only names separated by space.
 This is enought to make autocompletion works fast.
@@ -33,7 +34,7 @@ This is enought to make autocompletion works fast.
 	}
 
 	AddCommonFlags(cmd)
-	cmd.Flags().String("kubectl-command", "kubectl", "Command typed in the prompt. Use to pass kubectl arguments")
+	cmd.Flags().String("kubectl-flags", "", "An arbitrary string that contains flags accepted by kubectl")
 	return cmd
 }
 
@@ -92,7 +93,7 @@ func RunGet(f Factory, cmd *cobra.Command, args []string) (err error) {
 }
 
 func getKubectlFlags(cmd *cobra.Command) string {
-	r, err := cmd.Flags().GetString("kubectl-command")
+	r, err := cmd.Flags().GetString("kubectl-flags")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -103,18 +104,35 @@ type KubectlFlags struct {
 	namespace string
 	context   string
 	cluster   string
+	server    string
 }
 
 var (
 	namespaceFlagRegex = regexp.MustCompile(`--namespace[ =]([\w]+)`)
+	serverFlagRegex    = regexp.MustCompile(`--server[ =]([\S]+)`)
+	contextFlagRegex   = regexp.MustCompile(`--context[ =]([\w]+)`)
+	clusterFlagRegex   = regexp.MustCompile(`--cluster[ =]([\w]+)`)
 )
 
 func parseKubectlFlags(in string) *KubectlFlags {
 	res := KubectlFlags{}
-	namespaces := namespaceFlagRegex.FindAllStringSubmatch(in, -1)
-	for i := range namespaces {
-		res.namespace = namespaces[i][1]
+
+	for _, matches := range namespaceFlagRegex.FindAllStringSubmatch(in, -1) {
+		res.namespace = matches[1]
 	}
+
+	for _, matches := range serverFlagRegex.FindAllStringSubmatch(in, -1) {
+		res.server = matches[1]
+	}
+
+	for _, matches := range contextFlagRegex.FindAllStringSubmatch(in, -1) {
+		res.context = matches[1]
+	}
+
+	for _, matches := range clusterFlagRegex.FindAllStringSubmatch(in, -1) {
+		res.cluster = matches[1]
+	}
+
 	log.WithField("in", in).WithField("out", res).Debug("Parsed kubectl flags")
 	return &res
 }
@@ -122,10 +140,21 @@ func parseKubectlFlags(in string) *KubectlFlags {
 func makeFilterFor(kind string, conf *Config, flags *KubectlFlags) MrrFilter {
 	f := MrrFilter{}
 	if conf != nil {
+		if flags != nil && flags.context != "" {
+			conf.CurrentContext = flags.context
+		}
 		f = conf.makeFilter()
 	}
 	if flags != nil {
-		f.Namespace = flags.namespace
+		if flags.namespace != "" {
+			f.Namespace = flags.namespace
+		}
+		if flags.cluster != "" {
+			f.Server = conf.getCluster(flags.cluster).urlWithoutPort()
+		}
+		if flags.server != "" {
+			f.Server = flags.server
+		}
 	}
 	f.Kind = kind
 	return f

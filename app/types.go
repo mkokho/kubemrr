@@ -1,6 +1,8 @@
 package app
 
-import "strings"
+import (
+	"strings"
+)
 
 type ObjectMeta struct {
 	Name            string `json:"name,omitempty"`
@@ -57,13 +59,7 @@ func (c *Config) makeFilter() MrrFilter {
 		}
 	}
 
-	var cluster Cluster
-	for i := range c.Clusters {
-		if c.Clusters[i].Name == context.Cluster {
-			cluster = c.Clusters[i].Cluster
-			break
-		}
-	}
+	cluster := c.getCluster(context.Cluster)
 
 	return MrrFilter{
 		Namespace: context.Namespace,
@@ -71,11 +67,22 @@ func (c *Config) makeFilter() MrrFilter {
 	}
 }
 
-func (c *Cluster) urlWithoutPort() string {
+func (c Cluster) urlWithoutPort() string {
 	i := strings.LastIndex(c.Server, ":")
 	if i == -1 {
 		return c.Server
 	} else {
 		return c.Server[:i]
 	}
+}
+
+func (c *Config) getCluster(name string) Cluster {
+	var cluster Cluster
+	for i := range c.Clusters {
+		if c.Clusters[i].Name == name {
+			cluster = c.Clusters[i].Cluster
+			break
+		}
+	}
+	return cluster
 }

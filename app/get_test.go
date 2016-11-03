@@ -88,38 +88,108 @@ func TestRunGet(t *testing.T) {
 	}
 }
 
-func TestRunGetWithKubectlCommand(t *testing.T) {
+func TestRunGetWithKubectlFlags(t *testing.T) {
 	tc := &TestMirrorClient{}
 	f := &TestFactory{mrrClient: tc}
+	f.kubeconfig = Config{
+		CurrentContext: "c1",
+		Contexts: []ContextWrap{
+			{"c1", Context{"cluster_1", "ns1"}},
+			{"c2", Context{"cluster_2", "ns2"}},
+		},
+		Clusters: []ClusterWrap{
+			{"cluster_1", Cluster{"x1.com"}},
+			{"cluster_2", Cluster{"x2.com"}},
+			{"cluster_3", Cluster{"x3.com"}},
+		},
+	}
 	cmd := NewGetCommand(f)
 
 	tests := []struct {
-		kubectlCmd     string
-		expectedFilter MrrFilter
+		kubectlCmd        string
+		expectedNamespace string
+		expectedServer    string
 	}{
 		{
-			kubectlCmd:     "--namespace=ns1",
-			expectedFilter: MrrFilter{Namespace: "ns1", Kind: "pod"},
+			kubectlCmd:        "--namespace=ns1",
+			expectedNamespace: "ns1",
 		},
 		{
-			kubectlCmd:     "--namespace ns1",
-			expectedFilter: MrrFilter{Namespace: "ns1", Kind: "pod"},
+			kubectlCmd:        "--namespace ns1",
+			expectedNamespace: "ns1",
 		},
 		{
-			kubectlCmd:     " t --namespace ns1 t --namespace=ns2 t",
-			expectedFilter: MrrFilter{Namespace: "ns2", Kind: "pod"},
+			kubectlCmd:        " t --namespace ns1 t --namespace=ns2 t",
+			expectedNamespace: "ns2",
 		},
 		{
-			kubectlCmd:     "--namespace=ns1",
-			expectedFilter: MrrFilter{Namespace: "ns1", Kind: "pod"},
+			kubectlCmd:     "--server=http://a.b:34",
+			expectedServer: "http://a.b:34",
+		},
+		{
+			kubectlCmd:     "--server s1",
+			expectedServer: "s1",
+		},
+		{
+			kubectlCmd:     "xx --server s1 xx --server=s2",
+			expectedServer: "s2",
+		},
+		{
+			kubectlCmd:        "--context=c2",
+			expectedNamespace: "ns2",
+			expectedServer:    "x2.com",
+		},
+		{
+			kubectlCmd:        "--context c2",
+			expectedNamespace: "ns2",
+			expectedServer:    "x2.com",
+		},
+		{
+			kubectlCmd:        " c --context c1 x --context c2 c",
+			expectedNamespace: "ns2",
+			expectedServer:    "x2.com",
+		},
+		{
+			kubectlCmd:        "--cluster=cluster_2",
+			expectedNamespace: "ns1",
+			expectedServer:    "x2.com",
+		},
+		{
+			kubectlCmd:        "--cluster cluster_2",
+			expectedNamespace: "ns1",
+			expectedServer:    "x2.com",
+		},
+		{
+			kubectlCmd:        "x --cluster=cluster_1 r  --cluster=cluster_2 ",
+			expectedNamespace: "ns1",
+			expectedServer:    "x2.com",
+		},
+		{
+			kubectlCmd:        "--namespace=ns4 --context=c2",
+			expectedNamespace: "ns4",
+		},
+		{
+			kubectlCmd:     "--server=y1.com --cluster=cluster_2",
+			expectedServer: "y1.com",
+		},
+		{
+			kubectlCmd:     "--server=y1.com --context=c2",
+			expectedServer: "y1.com",
+		},
+		{
+			kubectlCmd:     "--cluster=cluster_3 --context=c2",
+			expectedServer: "x3.com",
 		},
 	}
 
 	for i, test := range tests {
-		cmd.Flags().Set("kubectl-command", test.kubectlCmd)
+		cmd.Flags().Set("kubectl-flags", test.kubectlCmd)
 		cmd.Run(cmd, []string{"po"})
-		if !reflect.DeepEqual(tc.lastFilter, test.expectedFilter) {
-			t.Errorf("Test %d: expected filter %v, got %v", i, test.expectedFilter, tc.lastFilter)
+		if test.expectedNamespace != "" && test.expectedNamespace != tc.lastFilter.Namespace {
+			t.Errorf("Test %d: expected namespace %v, got %v", i, test.expectedNamespace, tc.lastFilter.Namespace)
+		}
+		if test.expectedServer != "" && test.expectedServer != tc.lastFilter.Server {
+			t.Errorf("Test %d: expected server %v, got %v", i, test.expectedServer, tc.lastFilter.Server)
 		}
 	}
 }
