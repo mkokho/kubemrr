@@ -12,18 +12,23 @@ import (
 func NewGetCommand(f Factory) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "get [flags] [resource]",
-		Short: "Asks mirror for resources",
+		Short: "Ask mirror for resources",
 		Long: `
-Ask mirror of Kubernetes API server for resources.
+DESCRIPTION:
+  Ask "kubemrr watch" process for the names of alive resources
 
-Supported resources are:
-  - po, pod, pod
-  - svc, service, services
-  - deployment, deployments
+  Supported resources are:
+    - po, pod, pod
+    - svc, service, services
+    - deployment, deployments
 
-Currently it outputs only names separated by space.
-This is enought to make autocompletion works fast.
-		`,
+  To filter alive resources it uses current context from the ~/.kube/conf file.
+  Additionally, it accepts --namespace, --context, --server and --cluster parameters
+  in "kubectl-flags".
+
+EXAMPLE
+  kubemrr -a 0.0.0.0 -p 33033 --kubect-flags="--namespace prod" get pod
+`,
 		Run: func(cmd *cobra.Command, args []string) {
 			RunCommon(cmd)
 			err := RunGet(f, cmd, args)

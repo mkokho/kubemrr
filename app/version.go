@@ -12,7 +12,7 @@ const (
 func NewVersionCommand(f Factory) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "version",
-		Short: "Prints version",
+		Short: "Print version",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Fprintf(f.StdOut(), "kubemrr-%s", VERSION)
 		},
