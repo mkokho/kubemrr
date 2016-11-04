@@ -31,7 +31,7 @@ func init() {
 	RootCmd.AddCommand(app.NewGetCommand(f))
 	RootCmd.AddCommand(app.NewWatchCommand(f))
 	RootCmd.AddCommand(app.NewVersionCommand(f))
-	RootCmd.AddCommand(app.NewAliasCommand(f))
+	RootCmd.AddCommand(app.NewCompletionCommand(f))
 }
 
 func main() {

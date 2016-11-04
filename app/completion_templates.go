@@ -262,6 +262,7 @@ __unalias()
     __debug "${FUNCNAME[0]}: $1"
     local args=($1)
     kubectl_line=$(alias | grep "alias ${args[0]}" | grep -o kubectl[^\'\"]*)
+    kubectl_line="$kubectl_line $1"
 }
 
 __kubectl_parse_get()
@@ -273,7 +274,7 @@ __kubectl_parse_get()
     local template
     template="{{ range .items  }}{{ .metadata.name }} {{ end }}"
     local kubectl_out
-    if kubectl_out=$([[kubemrr_alias]] -a [[kubemrr_address]] -p [[kubemrr_port]] --kubect-flags="$kubectl_line" get "$1" 2>/dev/null); then
+    if kubectl_out=$([[kubemrr_path]] -a [[kubemrr_address]] -p [[kubemrr_port]] --kubectl-flags="$kubectl_line" get "$1" 2>/dev/null); then
         COMPREPLY=( $( compgen -W "${kubectl_out[*]}" -- "$cur" ) )
     fi
 }
