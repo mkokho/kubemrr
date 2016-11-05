@@ -210,6 +210,16 @@ __handle_word()
         return
     fi
     __debug "${FUNCNAME[0]}: c is $c words[c] is ${words[c]}"
+
+		case "${words[c-1]}" in
+        deployment | po | pod | pods | svc | service | services)
+        	__handle_reply
+      		return
+      		;;
+        *)
+            ;;
+    esac
+
     if [[ "${words[c]}" == -* ]]; then
         __handle_flag
     elif __contains_word "${words[c]}" "${commands[@]}"; then
