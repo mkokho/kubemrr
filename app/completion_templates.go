@@ -7,6 +7,7 @@ __debug()
 {
     if [[ -n ${BASH_COMP_DEBUG_FILE} ]]; then
         echo "$*" >> "${BASH_COMP_DEBUG_FILE}"
+        bash_comp_err_file="${BASH_COMP_DEBUG_FILE}"
     fi
 }
 
@@ -268,13 +269,14 @@ __unalias()
 __kubectl_parse_get()
 {
     local kubectl_line
+    local bash_comp_err_file=/dev/null
     __unalias "$COMP_LINE"
     __debug "${FUNCNAME[0]}: kubectl_line: $kubectl_line"
 
     local template
     template="{{ range .items  }}{{ .metadata.name }} {{ end }}"
     local kubectl_out
-    if kubectl_out=$([[kubemrr_path]] -a [[kubemrr_address]] -p [[kubemrr_port]] --kubectl-flags="$kubectl_line" get "$1" 2>/dev/null); then
+    if kubectl_out=$([[kubemrr_path]] -a [[kubemrr_address]] -p [[kubemrr_port]] --kubectl-flags="$kubectl_line" get "$1" 2>>"$bash_comp_err_file"); then
         COMPREPLY=( $( compgen -W "${kubectl_out[*]}" -- "$cur" ) )
     fi
 }
@@ -329,7 +331,7 @@ __kubectl_require_pod_and_container()
 __custom_func() {
     case ${last_command} in
         kubectl_get | kubectl_describe | kubectl_delete | kubectl_label | kubectl_stop | kubectl_edit | kubectl_patch |\
-        kubectl_annotate | kubectl_expose)
+        kubectl_annotate | kubectl_expose | kubectl_scale)
             __kubectl_get_resource
             return
             ;;
@@ -2007,7 +2009,13 @@ _kubectl_scale()
     must_have_one_flag=()
     must_have_one_flag+=("--replicas=")
     must_have_one_noun=()
+    must_have_one_noun+=("deployment")
+    must_have_one_noun+=("replicaset")
+    must_have_one_noun+=("replicationcontroller")
     noun_aliases=()
+    noun_aliases+=("deployment")
+    noun_aliases+=("replicaset")
+    noun_aliases+=("replicationcontroller")
 }
 
 _kubectl_cordon()
