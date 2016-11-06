@@ -71,7 +71,7 @@ func (c *MrrCache) updateKubeObject(server KubeServer, o KubeObject) {
 
 	found := false
 	for i := range os {
-		if os[i].Name == o.Name && os[i].Namespace == o.Namespace {
+		if os[i].Name == o.Name && os[i].Namespace == o.Namespace && os[i].Kind == o.Kind {
 			os[i] = o
 			found = true
 			break

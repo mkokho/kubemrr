@@ -166,3 +166,22 @@ func TestDeleteKubeObjects(t *testing.T) {
 		t.Errorf("Cache should contain only %+v, but it contains %+v", o1, c.objects[s])
 	}
 }
+
+func TestUpdateKubeObject(t *testing.T) {
+	c := NewMrrCache()
+	s := KubeServer{"s"}
+
+	expected := []KubeObject{
+		{TypeMeta: TypeMeta{"x"}, ObjectMeta: ObjectMeta{Name: "x1"}},
+		{TypeMeta: TypeMeta{"y"}, ObjectMeta: ObjectMeta{Name: "x1"}},
+		{TypeMeta: TypeMeta{"y"}, ObjectMeta: ObjectMeta{Name: "x1", Namespace: "ns2"}},
+	}
+
+	for i := range expected {
+		c.updateKubeObject(s, expected[i])
+	}
+
+	if !reflect.DeepEqual(c.objects[s], expected) {
+		t.Errorf("Cache should all %d obejcts, but it contains %+v", len(expected), c.objects[s])
+	}
+}

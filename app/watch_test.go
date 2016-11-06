@@ -113,13 +113,14 @@ func TestLoopWatchObjects(t *testing.T) {
 		{Modified, &KubeObject{ObjectMeta: ObjectMeta{Name: "pod1", ResourceVersion: "v2"}}},
 		{Added, &KubeObject{ObjectMeta: ObjectMeta{Name: "z"}}},
 		{Deleted, &KubeObject{ObjectMeta: ObjectMeta{Name: "z"}}},
+		{Added, &KubeObject{TypeMeta: TypeMeta{"other"}, ObjectMeta: ObjectMeta{Name: "pod0"}}},
 	}
 
-	loopWatchObjects(c, kc, "o")
+	loopWatchObjects(c, kc, "does not matter")
 	time.Sleep(10 * time.Millisecond)
 
 	//order matters in slice
-	expected := []KubeObject{*kc.objectEvents[4].Object, *kc.objectEvents[3].Object}
+	expected := []KubeObject{*kc.objectEvents[4].Object, *kc.objectEvents[3].Object, *kc.objectEvents[7].Object}
 	actual := c.objects[kc.Server()]
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf("Cache version %+v is not equal to expected %+v", actual, expected)
