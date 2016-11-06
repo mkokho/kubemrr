@@ -225,7 +225,7 @@ func TestConfigMakeFilter(t *testing.T) {
 		},
 	}
 
-	expected := MrrFilter{Server: "https://foo.com", Namespace: "blue"}
+	expected := MrrFilter{Server: "https://foo.com:8443", Namespace: "blue"}
 	actual := conf.makeFilter()
 	if !reflect.DeepEqual(expected, actual) {
 		t.Errorf("Expected %+v, got %+v", expected, actual)
