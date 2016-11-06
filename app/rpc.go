@@ -107,6 +107,25 @@ func (c *MrrCache) deleteKubeObject(server KubeServer, o KubeObject) {
 	}
 }
 
+func (c *MrrCache) deleteKubeObjects(s KubeServer, kind string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	os, ok := c.objects[s]
+	if !ok {
+		return
+	}
+
+	newObjects := []KubeObject{}
+	for i := range os {
+		if os[i].Kind != kind {
+			newObjects = append(newObjects, os[i])
+		}
+	}
+
+	c.objects[s] = newObjects
+}
+
 func trimPort(url string) string {
 	i := strings.LastIndex(url, ":")
 	if i < 7 {

@@ -2,7 +2,9 @@ package app
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/pkg/errors"
+	"math/rand"
 	"net/url"
 	"reflect"
 	"testing"
@@ -71,14 +73,26 @@ func TestRunWatch(t *testing.T) {
 
 func TestLoopWatchObjectsFailure(t *testing.T) {
 	c := NewMrrCache()
+	kind := "o"
 	kc := NewTestKubeClient()
 	kc.watchObjectError = errors.New("Test Error")
+	kc.makeObjectEvents = func() []*ObjectEvent {
+		randomName := fmt.Sprintf("r-%d", rand.Intn(9999))
+		return []*ObjectEvent{
+			&ObjectEvent{Added, &KubeObject{ObjectMeta: ObjectMeta{Name: randomName}, TypeMeta: TypeMeta{kind}}},
+		}
+	}
 
-	loopWatchObjects(c, kc, "o")
+	loopWatchObjects(c, kc, kind)
 
 	time.Sleep(10 * time.Millisecond)
-	if kc.watchObjectHits["o"] < 2 {
+	if kc.watchObjectHits[kind] < 2 {
 		t.Errorf("Not enough WatchObjects calls")
+	}
+
+	x := len(c.objects[kc.Server()])
+	if x > 1 {
+		t.Errorf("Cache must contain only one object, but contains %d", x)
 	}
 }
 

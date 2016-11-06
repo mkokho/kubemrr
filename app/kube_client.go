@@ -125,7 +125,8 @@ func (kc *DefaultKubeClient) newRequest(method string, urlStr string, body inter
 type TestKubeClient struct {
 	baseURL *url.URL
 
-	objectEvents []*ObjectEvent
+	objectEvents     []*ObjectEvent
+	makeObjectEvents func() []*ObjectEvent
 
 	watchObjectHits  map[string]int
 	watchObjectLock  *sync.RWMutex
@@ -137,6 +138,7 @@ func NewTestKubeClient() *TestKubeClient {
 	kc.baseURL, _ = url.Parse(fmt.Sprintf("random-url-%d", rand.Intn(999)))
 	kc.watchObjectLock = &sync.RWMutex{}
 	kc.watchObjectHits = map[string]int{}
+	kc.makeObjectEvents = func() []*ObjectEvent { return []*ObjectEvent{} }
 	return kc
 }
 
@@ -149,12 +151,17 @@ func (kc *TestKubeClient) WatchObjects(kind string, out chan *ObjectEvent) error
 	kc.watchObjectHits[kind] += 1
 	kc.watchObjectLock.Unlock()
 
+	for i := range kc.objectEvents {
+		out <- kc.objectEvents[i]
+	}
+
+	for _, o := range kc.makeObjectEvents() {
+		out <- o
+	}
+
 	if kc.watchObjectHits[kind] < 5 && kc.watchObjectError != nil {
 		return kc.watchObjectError
 	}
 
-	for i := range kc.objectEvents {
-		out <- kc.objectEvents[i]
-	}
 	select {}
 }

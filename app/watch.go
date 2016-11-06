@@ -93,6 +93,7 @@ func loopWatchObjects(c *MrrCache, kc KubeClient, kind string) {
 				fields["error"] = err.Error()
 			}
 			l.WithFields(fields).Info("watch connection was closed, retrying")
+			c.deleteKubeObjects(kc.Server(), kind)
 		}
 	}
 
@@ -110,6 +111,7 @@ func loopWatchObjects(c *MrrCache, kc KubeClient, kind string) {
 				case Added, Modified:
 					c.updateKubeObject(kc.Server(), *e.Object)
 				}
+				l.WithField("cache", c.objects).Debugf("objects in cache")
 			}
 		}
 	}
