@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -24,9 +25,14 @@ type ObjectEvent struct {
 	Object *KubeObject `json:"object"`
 }
 
+type ObjectList struct {
+	Objects []KubeObject `json:"items"`
+}
+
 type KubeClient interface {
 	Server() KubeServer
 	WatchObjects(kind string, out chan *ObjectEvent) error
+	GetObjects(kind string) ([]KubeObject, error)
 }
 
 type DefaultKubeClient struct {
@@ -57,6 +63,30 @@ func (kc *DefaultKubeClient) WatchObjects(kind string, out chan *ObjectEvent) er
 	default:
 		return fmt.Errorf("unsupported kind: %s", kind)
 	}
+}
+
+func (kc *DefaultKubeClient) GetObjects(kind string) ([]KubeObject, error) {
+	switch kind {
+	case "configmap":
+		return kc.get("api/v1/configmaps")
+	default:
+		return []KubeObject{}, fmt.Errorf("unsupported kind: %s", kind)
+	}
+}
+
+func (kc *DefaultKubeClient) get(url string) ([]KubeObject, error) {
+	req, err := kc.newRequest("GET", url, nil)
+	if err != nil {
+		return []KubeObject{}, err
+	}
+
+	var list ObjectList
+	err = kc.do(req, &list)
+	if err != nil {
+		return []KubeObject{}, err
+	}
+
+	return list.Objects, nil
 }
 
 func (kc *DefaultKubeClient) watch(url string, out chan *ObjectEvent) error {
@@ -122,6 +152,28 @@ func (kc *DefaultKubeClient) newRequest(method string, urlStr string, body inter
 	return req, nil
 }
 
+func (c *DefaultKubeClient) do(req *http.Request, v interface{}) error {
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		// Drain up to 512 bytes and close the body to let the Transport reuse the connection
+		io.CopyN(ioutil.Discard, resp.Body, 512)
+		resp.Body.Close()
+	}()
+
+	if v != nil {
+		err = json.NewDecoder(resp.Body).Decode(v)
+		if err == io.EOF {
+			err = nil // ignore EOF errors caused by empty response body
+		}
+	}
+
+	return err
+}
+
 type TestKubeClient struct {
 	baseURL *url.URL
 
@@ -131,6 +183,9 @@ type TestKubeClient struct {
 	watchObjectHits  map[string]int
 	watchObjectLock  *sync.RWMutex
 	watchObjectError error
+
+	objects       []KubeObject
+	getObjectHits map[string]int
 }
 
 func NewTestKubeClient() *TestKubeClient {
@@ -139,6 +194,8 @@ func NewTestKubeClient() *TestKubeClient {
 	kc.watchObjectLock = &sync.RWMutex{}
 	kc.watchObjectHits = map[string]int{}
 	kc.makeObjectEvents = func() []*ObjectEvent { return []*ObjectEvent{} }
+	kc.objects = []KubeObject{}
+	kc.getObjectHits = map[string]int{}
 	return kc
 }
 
@@ -164,4 +221,12 @@ func (kc *TestKubeClient) WatchObjects(kind string, out chan *ObjectEvent) error
 	}
 
 	select {}
+}
+
+func (kc *TestKubeClient) GetObjects(kind string) ([]KubeObject, error) {
+	kc.watchObjectLock.Lock()
+	kc.getObjectHits[kind] += 1
+	kc.watchObjectLock.Unlock()
+
+	return kc.objects, nil
 }

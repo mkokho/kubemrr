@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -153,5 +154,35 @@ func TestWatchDeployments(t *testing.T) {
 		if !reflect.DeepEqual(expectedEvent, actualEvent) {
 			t.Errorf("Expected %v, received %v", expectedEvent, actualEvent)
 		}
+	}
+}
+
+func TestGetConfigmaps(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc("/api/v1/configmaps", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `
+			{
+				"items": [
+					{ "metadata": { "name": "x1" } },
+					{ "metadata": { "name": "x2" } }
+				]
+			}`)
+	},
+	)
+
+	res, err := client.GetObjects("configmap")
+	if err != nil {
+		t.Errorf("GetServices returned error: %v", err)
+	}
+
+	expected := []KubeObject{
+		{ObjectMeta: ObjectMeta{Name: "x1"}},
+		{ObjectMeta: ObjectMeta{Name: "x2"}},
+	}
+
+	if !reflect.DeepEqual(res, expected) {
+		t.Errorf("Expected %+v, got %+v", expected, res)
 	}
 }
