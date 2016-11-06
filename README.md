@@ -2,57 +2,31 @@
 
 `kubemrr` mirrors description of Kubernetes resources for blazingly fast auto-completion.
 
-`kubectl` comes with a command to generate completion script for `bash` shell. 
+Bash  has the _programmable completion_ feature which permits typing a partial command, 
+then pressing the [Tab] key to auto-complete the command sequence. All you need to do is to write a completion script 
+and place it in `/etc/bash_completion.d` folder ([docs](http://www.tldp.org/LDP/abs/html/tabexpansion.html),
+[tutorial](https://debian-administration.org/article/316/An_introduction_to_bash_completion_part_1)). 
+Fortunately, `kubectl` comes with a command to generate completion script ([kubectl copmletion](http://kubernetes.io/docs/user-guide/kubectl/kubectl_completion/)). 
 The script works extremely well, but slow, because each time you hit [TAB] it sends a request 
-to Kubernetes API Server. If your server is on a different continent you might wait for up to 2 seconds.
-`kubemrr` keeps a description of resources locally. We will make completion script talk to `kubemrr` 
+to Kubernetes API Server. If your server is on a different continent you might wait for up to 2 seconds. 
+To reduce the delay, `kubemrr` keeps names of resources locally. We will make completion script talk to `kubemrr` 
 instead of real Kubernetes API server.
 
 # Example
 
 To start watching a server:
-
-- `kubemrr -p 34000 watch https://kube-us.example.org`
-
-To get names of the pods, services or deployments that are active on the server:
-
-- `kubemrr -p 34000 get pods`
-- `kubemrr -p 34000 get services`
-- `kubemrr -p 34000 get deployments`
-
-# Enabling auto-completion
-
-Most shells allow to program command completion. All you need to do is supply a completion script. 
-Below is a guide for `bash` shell
-
-## Bash
-
 ```
-cd tmp
-kubectl completion bash > ./kubectl_completion
-sed -i s/'kubectl get $(__kubectl_namespace_flag) -o template --template="${template}"'/'kubemrr get'/g kubectl_completion
-sudo mv kube_completion /etc/bash_completion.d/kubectl
-source /etc/bash_completion.d/kubectl
+kubemrr watch https://kube-us.example.org
+``` 
+
+To make completion script that talks to `kubemrr`:
+```
+alias kus='kubectl --context us'
+kubemrr completion --kubectl-alias=kus > kus
+sudo cp kus /etc/bash_completion.d
 ```
 
-To test it, start watching a server, and then type `kubectl get po [TAB][TAB]`
-
-## Bash with alias
-
-There is few more place to change in `/etc/bash_completion.d/kubectl` file. 
-Let's say your alias is `kus` and you keep mirror on port 33003:
-
+To test it:
 ```
-kubectl completion bash > ./kus
-sed -i s/'kubectl get $(__kubectl_namespace_flag) -o template --template="${template}"'/'kubemrr -p $kubemrr_port get'/g kus
-sed -i s/'local commands=("kubectl")'/'local commands=("kus")'/g kus
-sed -i s/'_kubectl()'/'_kus()'/g kus
-sed -i s/'local c=0'/'local c=0\n    local kubemrr_port=33003'/g kus
-sed -i s/'__start_kubectl kubectl'/'__start_kus kus'/g kus
+kus get po [TAB][TAB]
 ```
-
-It is possible to create script for multiple aliases. However, it is easy to break things because 
-function name are mostly the same. Nevertheless, you can experiment. Just run the above commands on 
-different files, and call `source` on them. Then test it. If you broke things, re-open terminal, 
-and retry ;)
-
