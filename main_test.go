@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/mkokho/kubemrr/app"
 	"net/http"
@@ -53,6 +54,16 @@ func k8sDeployments(w http.ResponseWriter, r *http.Request) {
 	stream(w, []string{`{"type": "ADDED", "object": {"kind":"deployment", "metadata": {"name": "deployment1"}}}`})
 }
 
+func k8sConfigmaps(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(w, `
+			{
+				"items": [
+					{ "kind": "ConfigMap", "metadata": { "name": "configmap1" } }
+				]
+			}`)
+
+}
+
 func startKubernetesServer() {
 	mux = http.NewServeMux()
 	k8sServer = httptest.NewServer(mux)
@@ -60,6 +71,7 @@ func startKubernetesServer() {
 
 	mux.HandleFunc("/api/v1/pods", k8sPods)
 	mux.HandleFunc("/api/v1/services", k8sServices)
+	mux.HandleFunc("/api/v1/configmaps", k8sConfigmaps)
 	mux.HandleFunc("/apis/extensions/v1beta1/deployments", k8sDeployments)
 }
 
@@ -94,6 +106,10 @@ func TestCommands(t *testing.T) {
 		{
 			arg:    "deployment",
 			output: "deployment1",
+		},
+		{
+			arg:    "configmap",
+			output: "configmap1",
 		},
 	}
 

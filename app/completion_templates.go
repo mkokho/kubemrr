@@ -212,7 +212,7 @@ __handle_word()
     __debug "${FUNCNAME[0]}: c is $c words[c] is ${words[c]}"
 
 		case "${words[c-1]}" in
-        deployment | po | pod | pods | svc | service | services)
+        deployment | po | pod | pods | svc | service | services | configmap | configmaps)
         	__handle_reply
       		return
       		;;

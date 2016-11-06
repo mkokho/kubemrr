@@ -159,6 +159,8 @@ func (f *TestFactory) StdErr() io.Writer {
 }
 
 func (f *TestFactory) MrrCache() *MrrCache {
+	log.Printf("cache in factory: %+v", f.mrrCache)
+
 	return f.mrrCache
 }
 

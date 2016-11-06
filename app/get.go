@@ -21,6 +21,7 @@ DESCRIPTION:
     - po, pod, pod
     - svc, service, services
     - deployment, deployments
+    - configmap, configmaps
 
   To filter alive resources it uses current context from the ~/.kube/conf file.
   Additionally, it accepts --namespace, --context, --server and --cluster parameters
@@ -54,7 +55,7 @@ func RunGet(f Factory, cmd *cobra.Command, args []string) (err error) {
 		return nil
 	}
 
-	regex := "(po|pod|pods|svc|service|services|deployment|deployments)"
+	regex := "(po|pod|pods|svc|service|services|deployment|deployments|configmap|configmaps)"
 	argMatcher, err := regexp.Compile(regex)
 	if err != nil {
 		fmt.Fprintf(f.StdErr(), "Could not compile regular expression: %v\n", err)
@@ -62,7 +63,7 @@ func RunGet(f Factory, cmd *cobra.Command, args []string) (err error) {
 	}
 
 	if !argMatcher.MatchString(args[0]) {
-		fmt.Fprintf(f.StdErr(), "Unsupported resource type [%s]\n", args)
+		fmt.Fprintf(f.StdErr(), "Unsupported resource type [%s]\n", args[0])
 		return nil
 	}
 
@@ -85,6 +86,8 @@ func RunGet(f Factory, cmd *cobra.Command, args []string) (err error) {
 		err = outputNames(client, makeFilterFor("pod", &conf, kubectlFlags), f.StdOut())
 	} else if strings.HasPrefix(args[0], "s") {
 		err = outputNames(client, makeFilterFor("service", &conf, kubectlFlags), f.StdOut())
+	} else if strings.HasPrefix(args[0], "c") {
+		err = outputNames(client, makeFilterFor("configmap", &conf, kubectlFlags), f.StdOut())
 	} else {
 		err = outputNames(client, makeFilterFor("deployment", &conf, kubectlFlags), f.StdOut())
 	}

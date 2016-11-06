@@ -21,7 +21,7 @@ DESCRIPTION:
   On each connection it will listen for changes happened in the Kubernetes cluster.
   The names of the alive resources are available by "get" command.
 
-  Mirrored resources: pods, services. deployments.
+  Mirrored resources: pods, services, deployments, configmaps
 
   By default, "get pod" returns pods from all servers and all namespaces.
   See help for "get" command to know how to filter.
@@ -144,7 +144,6 @@ func loopGetObjects(c *MrrCache, kc KubeClient, kind string, interval time.Durat
 				c.updateKubeObject(kc.Server(), objects[i])
 			}
 
-			l.WithField("cache", c.objects).Debugf("objects in cache")
 			time.Sleep(interval)
 		}
 	}

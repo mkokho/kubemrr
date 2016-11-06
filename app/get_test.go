@@ -72,6 +72,10 @@ func TestRunGet(t *testing.T) {
 			aliases:        []string{"deployment", "deployments"},
 			expectedFilter: MrrFilter{Kind: "deployment"},
 		},
+		{
+			aliases:        []string{"configmap", "configmaps"},
+			expectedFilter: MrrFilter{Kind: "configmap"},
+		},
 	}
 
 	for _, test := range tests {
