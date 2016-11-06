@@ -68,13 +68,13 @@ func (kc *DefaultKubeClient) WatchObjects(kind string, out chan *ObjectEvent) er
 func (kc *DefaultKubeClient) GetObjects(kind string) ([]KubeObject, error) {
 	switch kind {
 	case "configmap":
-		return kc.get("api/v1/configmaps")
+		return kc.get("api/v1/configmaps", kind)
 	default:
 		return []KubeObject{}, fmt.Errorf("unsupported kind: %s", kind)
 	}
 }
 
-func (kc *DefaultKubeClient) get(url string) ([]KubeObject, error) {
+func (kc *DefaultKubeClient) get(url string, kind string) ([]KubeObject, error) {
 	req, err := kc.newRequest("GET", url, nil)
 	if err != nil {
 		return []KubeObject{}, err
@@ -84,6 +84,10 @@ func (kc *DefaultKubeClient) get(url string) ([]KubeObject, error) {
 	err = kc.do(req, &list)
 	if err != nil {
 		return []KubeObject{}, err
+	}
+
+	for i := range list.Objects {
+		list.Objects[i].Kind = kind
 	}
 
 	return list.Objects, nil

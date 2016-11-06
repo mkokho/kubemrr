@@ -133,6 +133,7 @@ func loopGetObjects(c *MrrCache, kc KubeClient, kind string, interval time.Durat
 	l := log.WithField("kind", kind).WithField("server", kc.Server().URL).WithField("interval", interval)
 	update := func() {
 		for {
+			l.Info("getting objects")
 			objects, err := kc.GetObjects(kind)
 			if err != nil {
 				l.WithField("err", err).Infof("unexpected err while getting objects")
@@ -147,5 +148,6 @@ func loopGetObjects(c *MrrCache, kc KubeClient, kind string, interval time.Durat
 			time.Sleep(interval)
 		}
 	}
+
 	go update()
 }

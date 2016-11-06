@@ -58,7 +58,7 @@ func k8sConfigmaps(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `
 			{
 				"items": [
-					{ "kind": "ConfigMap", "metadata": { "name": "configmap1" } }
+					{ "metadata": { "name": "configmap1" } }
 				]
 			}`)
 

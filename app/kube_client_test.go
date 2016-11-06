@@ -178,8 +178,8 @@ func TestGetConfigmaps(t *testing.T) {
 	}
 
 	expected := []KubeObject{
-		{ObjectMeta: ObjectMeta{Name: "x1"}},
-		{ObjectMeta: ObjectMeta{Name: "x2"}},
+		{TypeMeta: TypeMeta{"configmap"}, ObjectMeta: ObjectMeta{Name: "x1"}},
+		{TypeMeta: TypeMeta{"configmap"}, ObjectMeta: ObjectMeta{Name: "x2"}},
 	}
 
 	if !reflect.DeepEqual(res, expected) {
