@@ -59,6 +59,7 @@ func TestRunWatch(t *testing.T) {
 
 	cmd := NewWatchCommand(f)
 	cmd.Flags().Set("port", "0")
+	cmd.Flags().Set("interval", "3ms")
 	go cmd.Run(cmd, servers)
 	time.Sleep(10 * time.Millisecond)
 
@@ -66,6 +67,11 @@ func TestRunWatch(t *testing.T) {
 		for _, kind := range []string{"pod", "service", "deployment"} {
 			if kc.watchObjectHits[kind] != 1 {
 				t.Errorf("Unexpected number of WatchObject requests for [%s] server [%s]: %v", kind, s, kc.watchObjectHits)
+			}
+		}
+		for _, kind := range []string{"configmap"} {
+			if kc.getObjectHits[kind] < 3 {
+				t.Errorf("Expected at least 3 GetObject requests for [%s] server [%s]: %v", kind, s, kc.getObjectHits)
 			}
 		}
 	}
@@ -117,5 +123,23 @@ func TestLoopWatchObjects(t *testing.T) {
 	actual := c.objects[kc.Server()]
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf("Cache version %+v is not equal to expected %+v", actual, expected)
+	}
+}
+
+func TestLoopGetObjects(t *testing.T) {
+	c := NewMrrCache()
+	kc := NewTestKubeClient()
+	kc.objects = []KubeObject{
+		{ObjectMeta: ObjectMeta{Name: "a1"}},
+		{ObjectMeta: ObjectMeta{Name: "a2"}},
+	}
+
+	loopGetObjects(c, kc, "", 1*time.Second)
+	time.Sleep(10 * time.Millisecond)
+
+	actual := c.objects[kc.Server()]
+	expected := kc.objects
+	if !reflect.DeepEqual(actual, expected) {
+		t.Errorf("Expected %+v, got %+v", expected, actual)
 	}
 }

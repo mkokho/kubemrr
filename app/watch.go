@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"net"
 	"net/url"
+	"time"
 )
 
 func NewWatchCommand(f Factory) *cobra.Command {
@@ -37,6 +38,7 @@ EXAMPLE:
 	}
 
 	AddCommonFlags(watchCmd)
+	watchCmd.Flags().Duration("interval", 30*time.Second, "Interval between requests to the server")
 	return watchCmd
 }
 
@@ -51,6 +53,12 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) {
 	l, err := net.Listen("tcp", bind)
 	if err != nil {
 		fmt.Fprintf(f.StdErr(), "Kube Mirror failed to bind on %s: %v", bind, err)
+		return
+	}
+
+	interval, err := cmd.Flags().GetDuration("interval")
+	if err != nil {
+		fmt.Fprintf(f.StdErr(), "Could not parse value of --interval")
 		return
 	}
 
@@ -69,6 +77,7 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) {
 		loopWatchObjects(c, kc, "pod")
 		loopWatchObjects(c, kc, "service")
 		loopWatchObjects(c, kc, "deployment")
+		loopGetObjects(c, kc, "configmap", interval)
 	}
 
 	log.Infof("Kube Mirror is listening on %s", bind)
@@ -117,5 +126,27 @@ func loopWatchObjects(c *MrrCache, kc KubeClient, kind string) {
 	}
 
 	go watch()
+	go update()
+}
+
+func loopGetObjects(c *MrrCache, kc KubeClient, kind string, interval time.Duration) {
+	l := log.WithField("kind", kind).WithField("server", kc.Server().URL).WithField("interval", interval)
+	update := func() {
+		for {
+			objects, err := kc.GetObjects(kind)
+			if err != nil {
+				l.WithField("err", err).Infof("unexpected err while getting objects")
+			} else {
+				l.WithField("objects", objects).Debug("received objects")
+			}
+
+			for i := range objects {
+				c.updateKubeObject(kc.Server(), objects[i])
+			}
+
+			l.WithField("cache", c.objects).Debugf("objects in cache")
+			time.Sleep(interval)
+		}
+	}
 	go update()
 }
