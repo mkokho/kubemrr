@@ -31,7 +31,7 @@ To test it:
 kus get po [TAB][TAB]
 ```
 
-To make completion script that talks to `kubemrr` that is running on different host:
+To make completion script that talks to `kubemrr` that is running on different host (use IP to save time on name resolution):
 ```
-kubemrr completion --address=fg.lan.server.co --kubectl-alias=kus > kus
+kubemrr completion --address=10.5.1.6 --kubectl-alias=kus > kus
 ```
