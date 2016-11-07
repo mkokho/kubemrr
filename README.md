@@ -33,5 +33,5 @@ kus get po [TAB][TAB]
 
 To make completion script that talks to `kubemrr` that is running on different host:
 ```
-kubemrr completion -a fg.lan.server.co --kubectl-alias=kus > kus
+kubemrr completion --address=fg.lan.server.co --kubectl-alias=kus > kus
 ```
