@@ -263,7 +263,7 @@ __kubectl_get_namespaces()
 {
     local template kubectl_out
     template="{{ range .items  }}{{ .metadata.name }} {{ end }}"
-    if kubectl_out=$(kubectl get -o template --template="${template}" namespace 2>/dev/null); then
+    if kubectl_out=$(echo "default kube-system mc mc-blue mc-green mc-red mm numero ops"); then
         COMPREPLY=( $( compgen -W "${kubectl_out[*]}" -- "$cur" ) )
     fi
 }
@@ -4558,14 +4558,14 @@ __kubectl_get_namespaces()
 {
     local template kubectl_out
     template="{{ range .items  }}{{ .metadata.name }} {{ end }}"
-    if kubectl_out=$(kubectl get -o template --template="${template}" namespace 2>/dev/null); then
+    if kubectl_out=$(echo "default kube-system mc mc-blue mc-green mc-red mm numero ops"); then
         COMPREPLY=( $( compgen -W "${kubectl_out[*]}" -- "$cur" ) )
     fi
 }
 
 __kubectl_parse_get()
 {
-    local kubectl_line
+		local kubectl_line=$COMP_LINE
     local bash_comp_err_file=/dev/null
     __debug "${funcstack[1]}: kubectl_line: $kubectl_line"
 
@@ -8420,4 +8420,6 @@ fi
 
 BASH_COMPLETION_EOF
 )
+
+compdef [[kubectl_alias]]=kubectl
 `
