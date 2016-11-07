@@ -130,7 +130,7 @@ func loopWatchObjects(c *MrrCache, kc KubeClient, kind string) {
 }
 
 func loopGetObjects(c *MrrCache, kc KubeClient, kind string, interval time.Duration) {
-	l := log.WithField("kind", kind).WithField("server", kc.Server().URL).WithField("interval", interval)
+	l := log.WithField("kind", kind).WithField("server", kc.Server().URL)
 	update := func() {
 		for {
 			l.Info("getting objects")
