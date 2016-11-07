@@ -35,3 +35,9 @@ To make completion script that talks to `kubemrr` that is running on different h
 ```
 kubemrr completion --address=10.5.1.6 --kubectl-alias=kus > kus
 ```
+
+# Autocompleted Resources 
+- pods
+- service
+- deployments
+- configmaps
