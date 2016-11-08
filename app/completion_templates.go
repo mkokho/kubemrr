@@ -8421,5 +8421,5 @@ fi
 BASH_COMPLETION_EOF
 )
 
-compdef [[kubectl_alias]]=kubectl
+compdef  [[kubectl_alias]]=kubectl
 `

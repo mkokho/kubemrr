@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	VERSION = "0.9.1"
+	VERSION = "0.9.2"
 )
 
 func NewVersionCommand(f Factory) *cobra.Command {
@@ -14,7 +14,7 @@ func NewVersionCommand(f Factory) *cobra.Command {
 		Use:   "version",
 		Short: "Print version",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Fprintf(f.StdOut(), "kubemrr-%s", VERSION)
+			fmt.Fprintf(f.StdOut(), "kubemrr-%s\n", VERSION)
 		},
 	}
 
