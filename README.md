@@ -22,18 +22,19 @@ kubemrr watch https://kube-us.example.org
 To make completion script that talks to `kubemrr`:
 ```
 alias kus='kubectl --context us'
-kubemrr completion --kubectl-alias=kus > kus
+kubemrr completion bash --kubectl-alias=kus > kus
 sudo cp kus /etc/bash_completion.d
 ```
 
 To test it:
 ```
+source kus
 kus get po [TAB][TAB]
 ```
 
 To make completion script that talks to `kubemrr` that is running on different host (use IP to save time on name resolution):
 ```
-kubemrr completion --address=10.5.1.6 --kubectl-alias=kus > kus
+kubemrr completion bash --address=10.5.1.6 --kubectl-alias=kus > kus
 ```
 
 # Autocompleted Resources 
