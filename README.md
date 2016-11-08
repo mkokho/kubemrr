@@ -30,6 +30,9 @@ To test it:
 ```
 source kus
 kus get po [TAB][TAB]
+kus get svc [TAB][TAB]
+kus get deployments [TAB][TAB]
+kus get configmaps [TAB][TAB]
 ```
 
 To make completion script that talks to `kubemrr` that is running on different host (use IP to save time on name resolution):
@@ -37,8 +40,5 @@ To make completion script that talks to `kubemrr` that is running on different h
 kubemrr completion bash --address=10.5.1.6 --kubectl-alias=kus > kus
 ```
 
-# Autocompleted Resources 
-- pods
-- service
-- deployments
-- configmaps
+# Download
+```wget https://github.com/mkokho/kubemrr/raw/v0.9.2/kubemrr```
