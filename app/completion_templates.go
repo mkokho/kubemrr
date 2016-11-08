@@ -8309,7 +8309,7 @@ _kubectl_completion()
     noun_aliases=()
 }
 
-_[[kubectl_alias]]()
+_kubectl()
 {
     last_command="kubectl"
     commands=()
@@ -8421,5 +8421,5 @@ fi
 BASH_COMPLETION_EOF
 )
 
-compdef  [[kubectl_alias]]=kubectl
+compdef [[kubectl_alias]]=kubectl
 `

@@ -41,4 +41,4 @@ kubemrr completion bash --address=10.5.1.6 --kubectl-alias=kus > kus
 ```
 
 # Download
-```wget https://github.com/mkokho/kubemrr/raw/v0.9.2/kubemrr```
+```wget https://github.com/mkokho/kubemrr/raw/v0.9.3/kubemrr```

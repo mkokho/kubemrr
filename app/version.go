@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	VERSION = "0.9.2"
+	VERSION = "0.9.3"
 )
 
 func NewVersionCommand(f Factory) *cobra.Command {
