@@ -1,6 +1,7 @@
 package app
 
 import (
+	"errors"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -30,12 +31,9 @@ DESCRIPTION:
 EXAMPLE
   kubemrr -a 0.0.0.0 -p 33033 --kubect-flags="--namespace prod" get pod
 `,
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			RunCommon(cmd)
-			err := RunGet(f, cmd, args)
-			if err != nil {
-				log.Fatal(err)
-			}
+			return RunGet(f, cmd, args)
 		},
 	}
 
@@ -44,33 +42,28 @@ EXAMPLE
 	return cmd
 }
 
-func RunGet(f Factory, cmd *cobra.Command, args []string) (err error) {
+func RunGet(f Factory, cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
-		fmt.Fprintf(f.StdErr(), "You must specify the resource type")
-		return nil
+		return errors.New("no resource type is given")
 	}
 
 	if len(args) > 1 {
-		fmt.Fprintf(f.StdErr(), "Only one argument is expected")
-		return nil
+		return errors.New("only one argument is expected")
 	}
 
 	regex := "(po|pod|pods|svc|service|services|deployment|deployments|configmap|configmaps)"
 	argMatcher, err := regexp.Compile(regex)
 	if err != nil {
-		fmt.Fprintf(f.StdErr(), "Could not compile regular expression: %v\n", err)
-		return nil
+		return fmt.Errorf("unexpected error: %s", err)
 	}
 
 	if !argMatcher.MatchString(args[0]) {
-		fmt.Fprintf(f.StdErr(), "Unsupported resource type [%s]\n", args[0])
-		return nil
+		return fmt.Errorf("unsupported resource type: %s", args[0])
 	}
 
 	conf, err := f.HomeKubeconfig()
 	if err != nil {
-		fmt.Fprintf(f.StdErr(), "Could not read kubeconfig: %s\n", err)
-		return nil
+		return fmt.Errorf("could not read kubeconfig: %s", err)
 	}
 
 	kubectlFlags := parseKubectlFlags(getKubectlFlags(cmd))
@@ -78,8 +71,7 @@ func RunGet(f Factory, cmd *cobra.Command, args []string) (err error) {
 	bind := GetBind(cmd)
 	client, err := f.MrrClient(bind)
 	if err != nil {
-		fmt.Fprintf(f.StdErr(), "Could not create client to kubemrr: %v\n", err)
-		return nil
+		return fmt.Errorf("could not create client to kubemrr: %s", err)
 	}
 
 	if strings.HasPrefix(args[0], "p") {
@@ -93,8 +85,7 @@ func RunGet(f Factory, cmd *cobra.Command, args []string) (err error) {
 	}
 
 	if err != nil {
-		fmt.Fprint(f.StdErr(), err)
-		return nil
+		return err
 	}
 
 	return nil
@@ -141,7 +132,7 @@ func parseKubectlFlags(in string) *KubectlFlags {
 		res.cluster = matches[1]
 	}
 
-	log.WithField("in", in).WithField("out", res).Debug("Parsed kubectl flags")
+	log.WithField("in", in).WithField("out", res).Debug("parsed kubectl flags")
 	return &res
 }
 

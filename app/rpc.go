@@ -43,7 +43,7 @@ func (c *MrrCache) Objects(f *MrrFilter, os *[]KubeObject) error {
 		}
 	}
 	if len(keys) == 0 {
-		log.WithField("server", f.Server).Errorf("unknown server", f.Server)
+		log.WithField("server", f.Server).Error("unknown server")
 		return fmt.Errorf("Unknown server %s", f.Server)
 	}
 
