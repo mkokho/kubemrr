@@ -115,7 +115,7 @@ func TestCommands(t *testing.T) {
 
 	for _, test := range tests {
 		buf.Reset()
-		getCmd.Run(getCmd, []string{test.arg})
+		getCmd.RunE(getCmd, []string{test.arg})
 		if buf.String() != test.output {
 			t.Errorf("Getting [%v]: expected [%v], but received [%v]", test.arg, test.output, buf)
 		}
