@@ -2,6 +2,9 @@
 
 all: osx linux
 
+test:
+   	go test . ./app
+
 linux:
 	go test . ./app
 	GOARCH=amd64 GOOS=linux go build
