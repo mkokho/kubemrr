@@ -5,6 +5,7 @@ import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"net/rpc"
+	"sort"
 	"strings"
 	"sync"
 )
@@ -36,7 +37,7 @@ func (c *MrrCache) Objects(f *MrrFilter, os *[]KubeObject) error {
 		return errors.New("Cannot find pods with nil filter")
 	}
 
-	keys := []KubeServer{}
+	keys := KubeServers{}
 	for k, _ := range c.objects {
 		if f.Server == "" || strings.EqualFold(trimPort(f.Server), trimPort(k.URL)) {
 			keys = append(keys, k)
@@ -48,6 +49,7 @@ func (c *MrrCache) Objects(f *MrrFilter, os *[]KubeObject) error {
 	}
 
 	res := []KubeObject{}
+	sort.Sort(keys)
 	for _, k := range keys {
 		for _, o := range c.objects[k] {
 			if strings.EqualFold(o.Kind, f.Kind) &&

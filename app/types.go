@@ -20,6 +20,22 @@ type KubeServer struct {
 	URL string
 }
 
+type KubeServers []KubeServer
+
+func (s KubeServers) Len() int {
+	return len(s)
+}
+
+func (s KubeServers) Less(i, j int) bool {
+	return s[i].URL < s[j].URL
+}
+
+func (s KubeServers) Swap(i, j int) {
+	x := s[j]
+	s[j] = s[i]
+	s[i] = x
+}
+
 //Config represent configuration written in .kube/config file
 type Config struct {
 	Clusters       []ClusterWrap `yaml:"clusters"`
