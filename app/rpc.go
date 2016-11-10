@@ -2,6 +2,7 @@ package app
 
 import (
 	"errors"
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"net/rpc"
 	"strings"
@@ -42,8 +43,8 @@ func (c *MrrCache) Objects(f *MrrFilter, os *[]KubeObject) error {
 		}
 	}
 	if len(keys) == 0 {
-		log.Infof("Cache does not know server %v", f.Server)
-		return nil
+		log.WithField("server", f.Server).Errorf("unknown server", f.Server)
+		return fmt.Errorf("Unknown server %s", f.Server)
 	}
 
 	res := []KubeObject{}

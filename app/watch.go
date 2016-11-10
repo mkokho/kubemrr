@@ -72,7 +72,7 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) {
 		}
 
 		kc := f.KubeClient(url)
-		log.Infof("Created kube client for %s", args[i])
+		log.WithField("server", kc.Server().URL).Info("created client")
 
 		loopWatchObjects(c, kc, "pod")
 		loopWatchObjects(c, kc, "service")
@@ -80,7 +80,7 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) {
 		loopGetObjects(c, kc, "configmap", interval)
 	}
 
-	log.Infof("Kube Mirror is listening on %s", bind)
+	log.WithField("bind", bind).Infof("started to listen", bind)
 	err = f.Serve(l, c)
 	if err != nil {
 		fmt.Fprintf(f.StdErr(), "Kube Mirror encounered unexpected error: %v", err)
@@ -136,7 +136,7 @@ func loopGetObjects(c *MrrCache, kc KubeClient, kind string, interval time.Durat
 			l.Info("getting objects")
 			objects, err := kc.GetObjects(kind)
 			if err != nil {
-				l.WithField("err", err).Infof("unexpected err while getting objects")
+				l.WithField("error", err).Error("unexpected error while getting objects")
 			} else {
 				l.WithField("objects", objects).Debug("received objects")
 			}
