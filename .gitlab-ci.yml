@@ -1,5 +1,0 @@
-# run tests using the binary built before
-test:
-  stage: test
-  script:
-    - make test
