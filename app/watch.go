@@ -1,6 +1,7 @@
 package app
 
 import (
+	"errors"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -31,9 +32,9 @@ EXAMPLE:
   kubemrr -a 0.0.0.0 -p 33033 get pod
 
 `,
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			RunCommon(cmd)
-			RunWatch(f, cmd, args)
+			return RunWatch(f, cmd, args)
 		},
 	}
 
@@ -42,24 +43,21 @@ EXAMPLE:
 	return watchCmd
 }
 
-func RunWatch(f Factory, cmd *cobra.Command, args []string) {
+func RunWatch(f Factory, cmd *cobra.Command, args []string) error {
 	if len(args) < 1 {
-		fmt.Fprint(f.StdErr(), "No URL given")
-		return
+		return errors.New("no URL given")
 	}
 
 	bind := GetBind(cmd)
 
 	l, err := net.Listen("tcp", bind)
 	if err != nil {
-		fmt.Fprintf(f.StdErr(), "Kube Mirror failed to bind on %s: %v", bind, err)
-		return
+		return fmt.Errorf("failed to bind on %s: %v", bind, err)
 	}
 
 	interval, err := cmd.Flags().GetDuration("interval")
 	if err != nil {
-		fmt.Fprintf(f.StdErr(), "Could not parse value of --interval")
-		return
+		return errors.New("could not parse value of --interval")
 	}
 
 	c := f.MrrCache()
@@ -67,8 +65,7 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) {
 	for i := range args {
 		url, err := url.Parse(args[i])
 		if err != nil || url.Scheme == "" {
-			fmt.Fprintf(f.StdErr(), "Could not parse [%s] as URL: %v", args[i], err)
-			return
+			return fmt.Errorf("could not parse [%s] as URL: %v", args[i], err)
 		}
 
 		kc := f.KubeClient(url)
@@ -83,10 +80,10 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) {
 	log.WithField("bind", bind).Infof("started to listen", bind)
 	err = f.Serve(l, c)
 	if err != nil {
-		fmt.Fprintf(f.StdErr(), "Kube Mirror encounered unexpected error: %v", err)
-		return
+		return fmt.Errorf("unexpected error: %v", err)
 	}
-	log.Println("Kube Mirror has stopped")
+
+	return errors.New("kubemrr has stopped")
 }
 
 func loopWatchObjects(c *MrrCache, kc KubeClient, kind string) {

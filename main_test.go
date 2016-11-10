@@ -87,7 +87,7 @@ func TestCommands(t *testing.T) {
 	f := app.NewFactory(buf, &app.Config{})
 	getCmd := app.NewGetCommand(f)
 	watchCmd := app.NewWatchCommand(f)
-	go watchCmd.Run(watchCmd, []string{k8sAddress})
+	go watchCmd.RunE(watchCmd, []string{k8sAddress})
 
 	time.Sleep(1 * time.Millisecond)
 

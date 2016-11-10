@@ -58,12 +58,14 @@ func TestClientObjects(t *testing.T) {
 	tests := []struct {
 		filter   MrrFilter
 		expected []KubeObject
+		isError  bool
 	}{
 		{
 			filter: MrrFilter{},
 		},
 		{
-			filter: MrrFilter{"server_other", "ns1", "pod"},
+			filter:  MrrFilter{"server_other", "ns1", "pod"},
+			isError: true,
 		},
 		{
 			filter: MrrFilter{"server1", "ns_other", "pod"},
@@ -143,7 +145,7 @@ func TestClientObjects(t *testing.T) {
 
 	for i, test := range tests {
 		actual, err := mrrClient.Objects(test.filter)
-		if err != nil {
+		if !test.isError && err != nil {
 			t.Errorf("Unexpected error %v", err)
 		}
 

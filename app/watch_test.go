@@ -1,7 +1,6 @@
 package app
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/pkg/errors"
 	"math/rand"
@@ -12,9 +11,7 @@ import (
 )
 
 func TestRunWatchInvalidArgs(t *testing.T) {
-	buf := bytes.NewBuffer([]byte{})
 	f := NewTestFactory()
-	f.stdErr = buf
 	cmd := NewWatchCommand(f)
 	cmd.Flags().Set("port", "0")
 
@@ -33,10 +30,9 @@ func TestRunWatchInvalidArgs(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		buf.Reset()
-		cmd.Run(cmd, test.args)
-		if buf.Len() == 0 {
-			t.Errorf("Test %d: nothing has been written to the error output, expected something", i)
+		err := cmd.RunE(cmd, test.args)
+		if err == nil {
+			t.Errorf("Test %d: expected error, but received nothing", i)
 		}
 	}
 }
@@ -60,7 +56,7 @@ func TestRunWatch(t *testing.T) {
 	cmd := NewWatchCommand(f)
 	cmd.Flags().Set("port", "0")
 	cmd.Flags().Set("interval", "3ms")
-	go cmd.Run(cmd, servers)
+	go cmd.RunE(cmd, servers)
 	time.Sleep(10 * time.Millisecond)
 
 	for s, kc := range f.kubeClients {
