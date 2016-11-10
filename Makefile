@@ -3,7 +3,7 @@
 all: osx linux
 
 test:
-   	go test . ./app
+	go test . ./app
 
 linux:
 	go test . ./app
