@@ -21,27 +21,28 @@ func AddCommonFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolP("verbose", "v", false, "Enables verbose output")
 }
 
-func RunCommon(cmd *cobra.Command) {
+func RunCommon(cmd *cobra.Command) error {
 	isVerbose, err := cmd.Flags().GetBool("verbose")
 	if err != nil {
-		log.Fatal(err)
+		return err
 	} else if isVerbose {
 		enableDebug()
 	}
+	return nil
 }
 
-func GetBind(cmd *cobra.Command) string {
+func GetBind(cmd *cobra.Command) (string, error) {
 	address, err := cmd.Flags().GetString("address")
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 
 	port, err := cmd.Flags().GetInt("port")
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 
-	return fmt.Sprintf("%s:%d", address, port)
+	return fmt.Sprintf("%s:%d", address, port), nil
 }
 
 type Factory interface {

@@ -32,7 +32,9 @@ EXAMPLE
   kubemrr -a 0.0.0.0 -p 33033 --kubect-flags="--namespace prod" get pod
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			RunCommon(cmd)
+			if err := RunCommon(cmd); err != nil {
+				return err
+			}
 			return RunGet(f, cmd, args)
 		},
 	}
@@ -66,9 +68,17 @@ func RunGet(f Factory, cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("could not read kubeconfig: %s", err)
 	}
 
-	kubectlFlags := parseKubectlFlags(getKubectlFlags(cmd))
+	rawKubectlFlags, err := cmd.Flags().GetString("kubectl-flags")
+	if err != nil {
+		return fmt.Errorf("unexpected error: %s", err)
+	}
+	kubectlFlags := parseKubectlFlags(rawKubectlFlags)
 
-	bind := GetBind(cmd)
+	bind, err := GetBind(cmd)
+	if err != nil {
+		return fmt.Errorf("unexpected error: %s", err)
+	}
+
 	client, err := f.MrrClient(bind)
 	if err != nil {
 		return fmt.Errorf("could not create client to kubemrr: %s", err)
@@ -89,14 +99,6 @@ func RunGet(f Factory, cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
-}
-
-func getKubectlFlags(cmd *cobra.Command) string {
-	r, err := cmd.Flags().GetString("kubectl-flags")
-	if err != nil {
-		log.Fatal(err)
-	}
-	return r
 }
 
 type KubectlFlags struct {

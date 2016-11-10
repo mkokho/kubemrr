@@ -33,7 +33,9 @@ EXAMPLE:
 
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			RunCommon(cmd)
+			if err := RunCommon(cmd); err != nil {
+				return err
+			}
 			return RunWatch(f, cmd, args)
 		},
 	}
@@ -48,7 +50,10 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) error {
 		return errors.New("no URL given")
 	}
 
-	bind := GetBind(cmd)
+	bind, err := GetBind(cmd)
+	if err != nil {
+		return fmt.Errorf("unexpected error: %s", err)
+	}
 
 	l, err := net.Listen("tcp", bind)
 	if err != nil {
