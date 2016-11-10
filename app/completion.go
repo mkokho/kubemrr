@@ -1,9 +1,9 @@
 package app
 
 import (
+	"errors"
 	"fmt"
 	"github.com/spf13/cobra"
-	"os"
 	"strconv"
 	"strings"
 )
@@ -12,12 +12,8 @@ func NewCompletionCommand(f Factory) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "completion",
 		Short: "Create completion script for kubectl (or alias)",
-		Run: func(cmd *cobra.Command, args []string) {
-			err := RunAlias(f, cmd, args)
-			if err != nil {
-				fmt.Fprint(f.StdErr(), err.Error())
-				os.Exit(1)
-			}
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return RunAlias(f, cmd, args)
 		},
 	}
 
@@ -30,11 +26,11 @@ func NewCompletionCommand(f Factory) *cobra.Command {
 
 func RunAlias(f Factory, cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("Shell must be specified, either 'bash' or 'zsh' \n")
+		return errors.New("Shell must be specified, either 'bash' or 'zsh' \n")
 	}
 
 	if len(args) > 1 {
-		return fmt.Errorf("Expected exactly one argument, either 'bash' or 'zsh'")
+		return errors.New("Expected exactly one argument, either 'bash' or 'zsh'")
 	}
 
 	shell := args[0]

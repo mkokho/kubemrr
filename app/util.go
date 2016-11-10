@@ -51,7 +51,6 @@ type Factory interface {
 	Serve(l net.Listener, c *MrrCache) error
 	HomeKubeconfig() (Config, error)
 	StdOut() io.Writer
-	StdErr() io.Writer
 }
 
 type DefaultFactory struct {
@@ -76,10 +75,6 @@ func (f *DefaultFactory) StdOut() io.Writer {
 	} else {
 		return f.stdOut
 	}
-}
-
-func (f *DefaultFactory) StdErr() io.Writer {
-	return os.Stderr
 }
 
 func (f *DefaultFactory) MrrCache() *MrrCache {
@@ -129,7 +124,6 @@ type TestFactory struct {
 	kubeClients map[string]*TestKubeClient
 	kubeconfig  Config
 	stdOut      io.Writer
-	stdErr      io.Writer
 }
 
 func NewTestFactory() *TestFactory {
@@ -147,14 +141,6 @@ func (f *TestFactory) StdOut() io.Writer {
 		return os.Stdout
 	} else {
 		return f.stdOut
-	}
-}
-
-func (f *TestFactory) StdErr() io.Writer {
-	if f.stdErr == nil {
-		return os.Stdout
-	} else {
-		return f.stdErr
 	}
 }
 
