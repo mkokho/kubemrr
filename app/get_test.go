@@ -15,7 +15,7 @@ func TestRunGetInvalidArgs(t *testing.T) {
 	}{
 		{
 			args:   []string{},
-			output: "specify the resource",
+			output: "no resource",
 		},
 		{
 			args:   []string{"1", "2"},
@@ -23,23 +23,21 @@ func TestRunGetInvalidArgs(t *testing.T) {
 		},
 		{
 			args:   []string{"k8s-resource"},
-			output: "Unsupported resource type",
+			output: "unsupported resource type",
 		},
 	}
 
-	buf := bytes.NewBuffer([]byte{})
-	f := &TestFactory{stdErr: buf}
+	f := &TestFactory{}
 	cmd := NewGetCommand(f)
 
 	for i, test := range tests {
-		buf.Reset()
-		cmd.Run(cmd, test.args)
-		if buf.Len() == 0 {
-			t.Errorf("Test %d: nothing has been written to the error output, expected: %v", i, test.output)
+		err := cmd.RunE(cmd, test.args)
+		if err == nil {
+			t.Errorf("Test %d: expected: %v, no error was returned", i, test.output)
 		}
 
-		if !strings.Contains(buf.String(), test.output) {
-			t.Errorf("Test %d: output [%v] does not contains expected [%v]", i, buf, test.output)
+		if !strings.Contains(err.Error(), test.output) {
+			t.Errorf("Test %d: output [%v] does not contains expected [%v]", i, err.Error(), test.output)
 		}
 	}
 }
@@ -76,17 +74,25 @@ func TestRunGet(t *testing.T) {
 			aliases:        []string{"configmap", "configmaps"},
 			expectedFilter: MrrFilter{Kind: "configmap"},
 		},
+		{
+			aliases:        []string{"ns", "namespace", "namespaces"},
+			expectedFilter: MrrFilter{Kind: "namespace"},
+		},
 	}
 
 	for _, test := range tests {
 		for _, alias := range test.aliases {
 			buf.Reset()
-			cmd.Run(cmd, []string{alias})
-			if !reflect.DeepEqual(tc.lastFilter, test.expectedFilter) {
-				t.Errorf("Running [get %v]: expected filter %v, got %v", alias, test.expectedFilter, tc.lastFilter)
-			}
-			if buf.String() != expectedOutput {
-				t.Errorf("Running [get %v]: output [%v] was not equal to expected [%v]", alias, buf, expectedOutput)
+			err := cmd.RunE(cmd, []string{alias})
+			if err != nil {
+				t.Errorf("Running [get %v]: got error: %v", alias, err)
+			} else {
+				if !reflect.DeepEqual(tc.lastFilter, test.expectedFilter) {
+					t.Errorf("Running [get %v]: expected filter %v, got %v", alias, test.expectedFilter, tc.lastFilter)
+				}
+				if buf.String() != expectedOutput {
+					t.Errorf("Running [get %v]: output [%v] was not equal to expected [%v]", alias, buf, expectedOutput)
+				}
 			}
 		}
 	}
@@ -188,7 +194,7 @@ func TestRunGetWithKubectlFlags(t *testing.T) {
 
 	for i, test := range tests {
 		cmd.Flags().Set("kubectl-flags", test.kubectlCmd)
-		cmd.Run(cmd, []string{"po"})
+		cmd.RunE(cmd, []string{"po"})
 		if test.expectedNamespace != "" && test.expectedNamespace != tc.lastFilter.Namespace {
 			t.Errorf("Test %d: expected namespace %v, got %v", i, test.expectedNamespace, tc.lastFilter.Namespace)
 		}
@@ -202,16 +208,14 @@ func TestRunGetClientError(t *testing.T) {
 	tc := &TestMirrorClient{
 		err: fmt.Errorf("TestFailure"),
 	}
-	buf := bytes.NewBuffer([]byte{})
-	f := &TestFactory{mrrClient: tc, stdErr: buf}
+	f := &TestFactory{mrrClient: tc}
 	cmd := NewGetCommand(f)
 
 	tests := []string{"pod", "service"}
 	for _, test := range tests {
-		buf.Reset()
-		cmd.Run(cmd, []string{test})
-		if !strings.Contains(buf.String(), tc.err.Error()) {
-			t.Errorf("Running [get %v]: error output [%v] was not equal to expected [%v]", test, buf, tc.err)
+		err := cmd.RunE(cmd, []string{test})
+		if !strings.Contains(err.Error(), tc.err.Error()) {
+			t.Errorf("Running [get %v]: error output [%v] was not equal to expected [%v]", test, err, tc.err)
 		}
 	}
 }

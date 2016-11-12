@@ -1,11 +1,13 @@
 package app
 
 import (
+	"errors"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"net"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -21,7 +23,7 @@ DESCRIPTION:
   On each connection it will listen for changes happened in the Kubernetes cluster.
   The names of the alive resources are available by "get" command.
 
-  Mirrored resources: pods, services, deployments, configmaps
+  Mirrored resources: pods, services, deployments, configmaps, namespaces
 
   By default, "get pod" returns pods from all servers and all namespaces.
   See help for "get" command to know how to filter.
@@ -31,35 +33,43 @@ EXAMPLE:
   kubemrr -a 0.0.0.0 -p 33033 get pod
 
 `,
-		Run: func(cmd *cobra.Command, args []string) {
-			RunCommon(cmd)
-			RunWatch(f, cmd, args)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := RunCommon(cmd); err != nil {
+				return err
+			}
+			return RunWatch(f, cmd, args)
 		},
 	}
 
 	AddCommonFlags(watchCmd)
-	watchCmd.Flags().Duration("interval", 30*time.Second, "Interval between requests to the server")
+	watchCmd.Flags().Duration("interval", 2*time.Minute, "Interval between requests to the server")
+	watchCmd.Flags().String("only", "", "Coma-separated names of resources to watch, empty to watch all supported")
 	return watchCmd
 }
 
-func RunWatch(f Factory, cmd *cobra.Command, args []string) {
+func RunWatch(f Factory, cmd *cobra.Command, args []string) error {
 	if len(args) < 1 {
-		fmt.Fprint(f.StdErr(), "No URL given")
-		return
+		return errors.New("no URL given")
 	}
 
-	bind := GetBind(cmd)
+	bind, err := GetBind(cmd)
+	if err != nil {
+		return fmt.Errorf("unexpected error: %s", err)
+	}
 
 	l, err := net.Listen("tcp", bind)
 	if err != nil {
-		fmt.Fprintf(f.StdErr(), "Kube Mirror failed to bind on %s: %v", bind, err)
-		return
+		return fmt.Errorf("failed to bind on %s: %v", bind, err)
 	}
 
 	interval, err := cmd.Flags().GetDuration("interval")
 	if err != nil {
-		fmt.Fprintf(f.StdErr(), "Could not parse value of --interval")
-		return
+		return errors.New("could not parse value of --interval")
+	}
+
+	enabledResources, err := cmd.Flags().GetString("only")
+	if err != nil {
+		return errors.New("could not parse value of --only")
 	}
 
 	c := f.MrrCache()
@@ -67,26 +77,36 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) {
 	for i := range args {
 		url, err := url.Parse(args[i])
 		if err != nil || url.Scheme == "" {
-			fmt.Fprintf(f.StdErr(), "Could not parse [%s] as URL: %v", args[i], err)
-			return
+			return fmt.Errorf("could not parse [%s] as URL: %v", args[i], err)
 		}
 
 		kc := f.KubeClient(url)
-		log.Infof("Created kube client for %s", args[i])
+		log.WithField("server", kc.Server().URL).Info("created client")
 
-		loopWatchObjects(c, kc, "pod")
-		loopWatchObjects(c, kc, "service")
-		loopWatchObjects(c, kc, "deployment")
-		loopGetObjects(c, kc, "configmap", interval)
+		for _, k := range []string{"pod"} {
+			if isWatching(k, enabledResources) {
+				loopWatchObjects(c, kc, k)
+			}
+		}
+
+		for _, k := range []string{"service", "deployment", "configmap", "namespace"} {
+			if isWatching(k, enabledResources) {
+				loopGetObjects(c, kc, k, interval)
+			}
+		}
 	}
 
-	log.Infof("Kube Mirror is listening on %s", bind)
+	log.WithField("bind", bind).Info("started to listen")
 	err = f.Serve(l, c)
 	if err != nil {
-		fmt.Fprintf(f.StdErr(), "Kube Mirror encounered unexpected error: %v", err)
-		return
+		return fmt.Errorf("unexpected error: %v", err)
 	}
-	log.Println("Kube Mirror has stopped")
+
+	return errors.New("kubemrr has stopped")
+}
+
+func isWatching(r string, rs string) bool {
+	return len(rs) == 0 || strings.Contains(rs, r)
 }
 
 func loopWatchObjects(c *MrrCache, kc KubeClient, kind string) {
@@ -133,17 +153,20 @@ func loopGetObjects(c *MrrCache, kc KubeClient, kind string, interval time.Durat
 	l := log.WithField("kind", kind).WithField("server", kc.Server().URL)
 	update := func() {
 		for {
-			l.Info("getting objects")
+			l.Info("updating objects")
 			objects, err := kc.GetObjects(kind)
 			if err != nil {
-				l.WithField("err", err).Infof("unexpected err while getting objects")
-			} else {
-				l.WithField("objects", objects).Debug("received objects")
+				l.WithField("error", err).Error("unexpected error while updating objects")
+				time.Sleep(10 * time.Second)
+				continue
 			}
 
+			l.WithField("objects", objects).Debug("received objects")
+			c.deleteKubeObjects(kc.Server(), kind)
 			for i := range objects {
 				c.updateKubeObject(kc.Server(), objects[i])
 			}
+			l.Infof("put %d objects into cache", len(objects))
 
 			time.Sleep(interval)
 		}

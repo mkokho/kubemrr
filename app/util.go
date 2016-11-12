@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	log "github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 	"io"
@@ -21,27 +20,28 @@ func AddCommonFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolP("verbose", "v", false, "Enables verbose output")
 }
 
-func RunCommon(cmd *cobra.Command) {
+func RunCommon(cmd *cobra.Command) error {
 	isVerbose, err := cmd.Flags().GetBool("verbose")
 	if err != nil {
-		log.Fatal(err)
+		return err
 	} else if isVerbose {
 		enableDebug()
 	}
+	return nil
 }
 
-func GetBind(cmd *cobra.Command) string {
+func GetBind(cmd *cobra.Command) (string, error) {
 	address, err := cmd.Flags().GetString("address")
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 
 	port, err := cmd.Flags().GetInt("port")
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 
-	return fmt.Sprintf("%s:%d", address, port)
+	return fmt.Sprintf("%s:%d", address, port), nil
 }
 
 type Factory interface {
@@ -51,7 +51,6 @@ type Factory interface {
 	Serve(l net.Listener, c *MrrCache) error
 	HomeKubeconfig() (Config, error)
 	StdOut() io.Writer
-	StdErr() io.Writer
 }
 
 type DefaultFactory struct {
@@ -76,10 +75,6 @@ func (f *DefaultFactory) StdOut() io.Writer {
 	} else {
 		return f.stdOut
 	}
-}
-
-func (f *DefaultFactory) StdErr() io.Writer {
-	return os.Stderr
 }
 
 func (f *DefaultFactory) MrrCache() *MrrCache {
@@ -129,12 +124,12 @@ type TestFactory struct {
 	kubeClients map[string]*TestKubeClient
 	kubeconfig  Config
 	stdOut      io.Writer
-	stdErr      io.Writer
 }
 
 func NewTestFactory() *TestFactory {
 	return &TestFactory{
 		kubeClients: make(map[string]*TestKubeClient),
+		mrrCache:    NewMrrCache(),
 	}
 }
 
@@ -150,17 +145,7 @@ func (f *TestFactory) StdOut() io.Writer {
 	}
 }
 
-func (f *TestFactory) StdErr() io.Writer {
-	if f.stdErr == nil {
-		return os.Stdout
-	} else {
-		return f.stdErr
-	}
-}
-
 func (f *TestFactory) MrrCache() *MrrCache {
-	log.Printf("cache in factory: %+v", f.mrrCache)
-
 	return f.mrrCache
 }
 

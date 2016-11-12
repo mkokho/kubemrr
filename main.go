@@ -15,15 +15,15 @@
 package main
 
 import (
-	"fmt"
 	"github.com/mkokho/kubemrr/app"
 	"github.com/spf13/cobra"
 	"os"
 )
 
 var RootCmd = &cobra.Command{
-	Use:   "kubemrr",
-	Short: "kubemrr mirrors description of Kubernetes resources",
+	Use:          "kubemrr",
+	Short:        "kubemrr mirrors description of Kubernetes resources",
+	SilenceUsage: true,
 }
 
 func init() {
@@ -36,7 +36,6 @@ func init() {
 
 func main() {
 	if err := RootCmd.Execute(); err != nil {
-		fmt.Println(err)
 		os.Exit(-1)
 	}
 }

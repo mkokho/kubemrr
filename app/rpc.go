@@ -2,8 +2,10 @@ package app
 
 import (
 	"errors"
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"net/rpc"
+	"sort"
 	"strings"
 	"sync"
 )
@@ -35,22 +37,23 @@ func (c *MrrCache) Objects(f *MrrFilter, os *[]KubeObject) error {
 		return errors.New("Cannot find pods with nil filter")
 	}
 
-	keys := []KubeServer{}
+	keys := KubeServers{}
 	for k, _ := range c.objects {
 		if f.Server == "" || strings.EqualFold(trimPort(f.Server), trimPort(k.URL)) {
 			keys = append(keys, k)
 		}
 	}
 	if len(keys) == 0 {
-		log.Infof("Cache does not know server %v", f.Server)
-		return nil
+		log.WithField("server", f.Server).Error("unknown server")
+		return fmt.Errorf("Unknown server %s", f.Server)
 	}
 
 	res := []KubeObject{}
+	sort.Sort(keys)
 	for _, k := range keys {
 		for _, o := range c.objects[k] {
 			if strings.EqualFold(o.Kind, f.Kind) &&
-				(f.Namespace == "" || strings.EqualFold(o.Namespace, f.Namespace)) {
+				(f.Namespace == "" || o.Kind == "namespace" || strings.EqualFold(o.Namespace, f.Namespace)) {
 				res = append(res, o)
 			}
 		}

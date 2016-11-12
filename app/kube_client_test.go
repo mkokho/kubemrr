@@ -174,12 +174,102 @@ func TestGetConfigmaps(t *testing.T) {
 
 	res, err := client.GetObjects("configmap")
 	if err != nil {
-		t.Errorf("GetServices returned error: %v", err)
+		t.Errorf("unexpected error: %v", err)
 	}
 
 	expected := []KubeObject{
 		{TypeMeta: TypeMeta{"configmap"}, ObjectMeta: ObjectMeta{Name: "x1"}},
 		{TypeMeta: TypeMeta{"configmap"}, ObjectMeta: ObjectMeta{Name: "x2"}},
+	}
+
+	if !reflect.DeepEqual(res, expected) {
+		t.Errorf("Expected %+v, got %+v", expected, res)
+	}
+}
+
+func TestGetNamespaces(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc("/api/v1/namespaces", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `
+			{
+				"items": [
+					{ "metadata": { "name": "x1" } },
+					{ "metadata": { "name": "x2" } }
+				]
+			}`)
+	},
+	)
+
+	res, err := client.GetObjects("namespace")
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	expected := []KubeObject{
+		{TypeMeta: TypeMeta{"namespace"}, ObjectMeta: ObjectMeta{Name: "x1"}},
+		{TypeMeta: TypeMeta{"namespace"}, ObjectMeta: ObjectMeta{Name: "x2"}},
+	}
+
+	if !reflect.DeepEqual(res, expected) {
+		t.Errorf("Expected %+v, got %+v", expected, res)
+	}
+}
+
+func TestGetDeployments(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc("/apis/extensions/v1beta1/deployments", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `
+			{
+				"items": [
+					{ "metadata": { "name": "x1" } },
+					{ "metadata": { "name": "x2" } }
+				]
+			}`)
+	},
+	)
+
+	res, err := client.GetObjects("deployment")
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	expected := []KubeObject{
+		{TypeMeta: TypeMeta{"deployment"}, ObjectMeta: ObjectMeta{Name: "x1"}},
+		{TypeMeta: TypeMeta{"deployment"}, ObjectMeta: ObjectMeta{Name: "x2"}},
+	}
+
+	if !reflect.DeepEqual(res, expected) {
+		t.Errorf("Expected %+v, got %+v", expected, res)
+	}
+}
+
+func TestGetServices(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc("/api/v1/services", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `
+			{
+				"items": [
+					{ "metadata": { "name": "x1" } },
+					{ "metadata": { "name": "x2" } }
+				]
+			}`)
+	},
+	)
+
+	res, err := client.GetObjects("service")
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	expected := []KubeObject{
+		{TypeMeta: TypeMeta{"service"}, ObjectMeta: ObjectMeta{Name: "x1"}},
+		{TypeMeta: TypeMeta{"service"}, ObjectMeta: ObjectMeta{Name: "x2"}},
 	}
 
 	if !reflect.DeepEqual(res, expected) {

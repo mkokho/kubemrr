@@ -1,7 +1,6 @@
 package app
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/pkg/errors"
 	"math/rand"
@@ -12,9 +11,7 @@ import (
 )
 
 func TestRunWatchInvalidArgs(t *testing.T) {
-	buf := bytes.NewBuffer([]byte{})
 	f := NewTestFactory()
-	f.stdErr = buf
 	cmd := NewWatchCommand(f)
 	cmd.Flags().Set("port", "0")
 
@@ -33,10 +30,9 @@ func TestRunWatchInvalidArgs(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		buf.Reset()
-		cmd.Run(cmd, test.args)
-		if buf.Len() == 0 {
-			t.Errorf("Test %d: nothing has been written to the error output, expected something", i)
+		err := cmd.RunE(cmd, test.args)
+		if err == nil {
+			t.Errorf("Test %d: expected error, but received nothing", i)
 		}
 	}
 }
@@ -60,18 +56,48 @@ func TestRunWatch(t *testing.T) {
 	cmd := NewWatchCommand(f)
 	cmd.Flags().Set("port", "0")
 	cmd.Flags().Set("interval", "3ms")
-	go cmd.Run(cmd, servers)
+	go cmd.RunE(cmd, servers)
 	time.Sleep(10 * time.Millisecond)
 
 	for s, kc := range f.kubeClients {
-		for _, kind := range []string{"pod", "service", "deployment"} {
+		for _, kind := range []string{"pod"} {
 			if kc.watchObjectHits[kind] != 1 {
 				t.Errorf("Unexpected number of WatchObject requests for [%s] server [%s]: %v", kind, s, kc.watchObjectHits)
 			}
 		}
-		for _, kind := range []string{"configmap"} {
+		for _, kind := range []string{"configmap", "namespace", "service", "deployment"} {
 			if kc.getObjectHits[kind] < 3 {
-				t.Errorf("Expected at least 3 GetObject requests for [%s] server [%s]: %v", kind, s, kc.getObjectHits)
+				t.Errorf("Expected at least 3 GetObject requests for [%s] server [%s], hits were %v", kind, s, kc.getObjectHits)
+			}
+		}
+	}
+}
+
+func TestRunWatchWithOnlyFlag(t *testing.T) {
+	f := NewTestFactory()
+	cmd := NewWatchCommand(f)
+	cmd.Flags().Set("port", "0")
+	cmd.Flags().Set("interval", "3ms")
+	cmd.Flags().Set("only", "pod,namespace")
+	go cmd.RunE(cmd, []string{"http://z.org"})
+	time.Sleep(10 * time.Millisecond)
+
+	for _, kc := range f.kubeClients {
+		for kind, hits := range kc.watchObjectHits {
+			if kind == "pod" && hits < 1 {
+				t.Errorf("Expected to hit [%s] at least 3 times, but was [%d]", kind, hits)
+			}
+			if kind != "pod" && hits > 0 {
+				t.Errorf("Did not expect to hit [%s]", kind)
+			}
+		}
+
+		for kind, hits := range kc.getObjectHits {
+			if kind == "namespace" && hits < 3 {
+				t.Errorf("Expected to hit [%s] at least 3 times, but was [%d]", kind, hits)
+			}
+			if kind != "namespace" && hits > 0 {
+				t.Errorf("Did not expect to hit [%s]", kind)
 			}
 		}
 	}
@@ -82,7 +108,7 @@ func TestLoopWatchObjectsFailure(t *testing.T) {
 	kind := "o"
 	kc := NewTestKubeClient()
 	kc.watchObjectError = errors.New("Test Error")
-	kc.makeObjectEvents = func() []*ObjectEvent {
+	kc.objectEventsF = func() []*ObjectEvent {
 		randomName := fmt.Sprintf("r-%d", rand.Intn(9999))
 		return []*ObjectEvent{
 			&ObjectEvent{Added, &KubeObject{ObjectMeta: ObjectMeta{Name: randomName}, TypeMeta: TypeMeta{kind}}},
@@ -130,17 +156,28 @@ func TestLoopWatchObjects(t *testing.T) {
 func TestLoopGetObjects(t *testing.T) {
 	c := NewMrrCache()
 	kc := NewTestKubeClient()
-	kc.objects = []KubeObject{
+	kind := ""
+
+	finalObjects := []KubeObject{
 		{ObjectMeta: ObjectMeta{Name: "a1"}},
 		{ObjectMeta: ObjectMeta{Name: "a2"}},
 	}
+	kc.objectsF = func() []KubeObject {
+		if kc.getObjectHits[kind] > 2 {
+			return finalObjects
+		} else {
+			return []KubeObject{
+				{ObjectMeta: ObjectMeta{Name: fmt.Sprintf("rand-%d", rand.Intn(999))}},
+			}
+		}
+	}
 
-	loopGetObjects(c, kc, "", 1*time.Second)
+	loopGetObjects(c, kc, kind, 3*time.Millisecond)
 	time.Sleep(10 * time.Millisecond)
 
 	actual := c.objects[kc.Server()]
-	expected := kc.objects
+	expected := finalObjects
 	if !reflect.DeepEqual(actual, expected) {
-		t.Errorf("Expected %+v, got %+v", expected, actual)
+		t.Errorf("Expected \n%+v \n Got \n%+v", expected, actual)
 	}
 }

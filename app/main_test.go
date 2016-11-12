@@ -1,8 +1,12 @@
 package app
 
-import "testing"
+import (
+	"os"
+	"testing"
+)
 
 func TestMain(m *testing.M) {
 	enableDebug()
-	m.Run()
+	code := m.Run()
+	os.Exit(code)
 }

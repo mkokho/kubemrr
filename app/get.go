@@ -1,6 +1,7 @@
 package app
 
 import (
+	"errors"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -21,6 +22,7 @@ DESCRIPTION:
     - po, pod, pod
     - svc, service, services
     - deployment, deployments
+    - ns, namespace, namespaces
     - configmap, configmaps
 
   To filter alive resources it uses current context from the ~/.kube/conf file.
@@ -30,12 +32,11 @@ DESCRIPTION:
 EXAMPLE
   kubemrr -a 0.0.0.0 -p 33033 --kubect-flags="--namespace prod" get pod
 `,
-		Run: func(cmd *cobra.Command, args []string) {
-			RunCommon(cmd)
-			err := RunGet(f, cmd, args)
-			if err != nil {
-				log.Fatal(err)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := RunCommon(cmd); err != nil {
+				return err
 			}
+			return RunGet(f, cmd, args)
 		},
 	}
 
@@ -44,42 +45,44 @@ EXAMPLE
 	return cmd
 }
 
-func RunGet(f Factory, cmd *cobra.Command, args []string) (err error) {
+func RunGet(f Factory, cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
-		fmt.Fprintf(f.StdErr(), "You must specify the resource type")
-		return nil
+		return errors.New("no resource type is given")
 	}
 
 	if len(args) > 1 {
-		fmt.Fprintf(f.StdErr(), "Only one argument is expected")
-		return nil
+		return errors.New("only one argument is expected")
 	}
 
-	regex := "(po|pod|pods|svc|service|services|deployment|deployments|configmap|configmaps)"
+	regex := "(po|pod|pods|svc|service|services|deployment|deployments|ns|namespace|namespaces|configmap|configmaps)"
 	argMatcher, err := regexp.Compile(regex)
 	if err != nil {
-		fmt.Fprintf(f.StdErr(), "Could not compile regular expression: %v\n", err)
-		return nil
+		return fmt.Errorf("unexpected error: %s", err)
 	}
 
 	if !argMatcher.MatchString(args[0]) {
-		fmt.Fprintf(f.StdErr(), "Unsupported resource type [%s]\n", args[0])
-		return nil
+		return fmt.Errorf("unsupported resource type: %s", args[0])
 	}
 
 	conf, err := f.HomeKubeconfig()
 	if err != nil {
-		fmt.Fprintf(f.StdErr(), "Could not read kubeconfig: %s\n", err)
-		return nil
+		return fmt.Errorf("could not read kubeconfig: %s", err)
 	}
 
-	kubectlFlags := parseKubectlFlags(getKubectlFlags(cmd))
+	rawKubectlFlags, err := cmd.Flags().GetString("kubectl-flags")
+	if err != nil {
+		return fmt.Errorf("unexpected error: %s", err)
+	}
+	kubectlFlags := parseKubectlFlags(rawKubectlFlags)
 
-	bind := GetBind(cmd)
+	bind, err := GetBind(cmd)
+	if err != nil {
+		return fmt.Errorf("unexpected error: %s", err)
+	}
+
 	client, err := f.MrrClient(bind)
 	if err != nil {
-		fmt.Fprintf(f.StdErr(), "Could not create client to kubemrr: %v\n", err)
-		return nil
+		return fmt.Errorf("could not create client to kubemrr: %s", err)
 	}
 
 	if strings.HasPrefix(args[0], "p") {
@@ -88,24 +91,17 @@ func RunGet(f Factory, cmd *cobra.Command, args []string) (err error) {
 		err = outputNames(client, makeFilterFor("service", &conf, kubectlFlags), f.StdOut())
 	} else if strings.HasPrefix(args[0], "c") {
 		err = outputNames(client, makeFilterFor("configmap", &conf, kubectlFlags), f.StdOut())
+	} else if strings.HasPrefix(args[0], "n") {
+		err = outputNames(client, makeFilterFor("namespace", &conf, kubectlFlags), f.StdOut())
 	} else {
 		err = outputNames(client, makeFilterFor("deployment", &conf, kubectlFlags), f.StdOut())
 	}
 
 	if err != nil {
-		fmt.Fprint(f.StdErr(), err)
-		return nil
+		return err
 	}
 
 	return nil
-}
-
-func getKubectlFlags(cmd *cobra.Command) string {
-	r, err := cmd.Flags().GetString("kubectl-flags")
-	if err != nil {
-		log.Fatal(err)
-	}
-	return r
 }
 
 type KubectlFlags struct {
@@ -141,7 +137,7 @@ func parseKubectlFlags(in string) *KubectlFlags {
 		res.cluster = matches[1]
 	}
 
-	log.WithField("in", in).WithField("out", res).Debug("Parsed kubectl flags")
+	log.WithField("in", in).WithField("out", res).Debug("parsed kubectl flags")
 	return &res
 }
 
