@@ -57,13 +57,11 @@ func k8sDeployments(w http.ResponseWriter, r *http.Request) {
 }
 
 func k8sConfigmaps(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, `
-			{
-				"items": [
-					{ "metadata": { "name": "configmap1" } }
-				]
-			}`)
+	fmt.Fprint(w, ` { "items": [ { "metadata": { "name": "configmap1" } } ] }`)
+}
 
+func k8sNamespaces(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(w, ` { "items": [ { "metadata": { "name": "namespace1" } } ] }`)
 }
 
 func startKubernetesServer() {
@@ -74,6 +72,7 @@ func startKubernetesServer() {
 	mux.HandleFunc("/api/v1/pods", k8sPods)
 	mux.HandleFunc("/api/v1/services", k8sServices)
 	mux.HandleFunc("/api/v1/configmaps", k8sConfigmaps)
+	mux.HandleFunc("/api/v1/namespaces", k8sNamespaces)
 	mux.HandleFunc("/apis/extensions/v1beta1/deployments", k8sDeployments)
 }
 
@@ -114,6 +113,10 @@ func TestCommands(t *testing.T) {
 		{
 			arg:    "configmap",
 			output: "configmap1",
+		},
+		{
+			arg:    "namespace",
+			output: "namespace1",
 		},
 	}
 
