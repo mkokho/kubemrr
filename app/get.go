@@ -22,6 +22,7 @@ DESCRIPTION:
     - po, pod, pod
     - svc, service, services
     - deployment, deployments
+    - ns, namespace, namespaces
     - configmap, configmaps
 
   To filter alive resources it uses current context from the ~/.kube/conf file.
@@ -53,7 +54,7 @@ func RunGet(f Factory, cmd *cobra.Command, args []string) error {
 		return errors.New("only one argument is expected")
 	}
 
-	regex := "(po|pod|pods|svc|service|services|deployment|deployments|configmap|configmaps)"
+	regex := "(po|pod|pods|svc|service|services|deployment|deployments|ns|namespace|namespaces|configmap|configmaps)"
 	argMatcher, err := regexp.Compile(regex)
 	if err != nil {
 		return fmt.Errorf("unexpected error: %s", err)
@@ -90,6 +91,8 @@ func RunGet(f Factory, cmd *cobra.Command, args []string) error {
 		err = outputNames(client, makeFilterFor("service", &conf, kubectlFlags), f.StdOut())
 	} else if strings.HasPrefix(args[0], "c") {
 		err = outputNames(client, makeFilterFor("configmap", &conf, kubectlFlags), f.StdOut())
+	} else if strings.HasPrefix(args[0], "n") {
+		err = outputNames(client, makeFilterFor("namespace", &conf, kubectlFlags), f.StdOut())
 	} else {
 		err = outputNames(client, makeFilterFor("deployment", &conf, kubectlFlags), f.StdOut())
 	}

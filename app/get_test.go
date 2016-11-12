@@ -74,17 +74,25 @@ func TestRunGet(t *testing.T) {
 			aliases:        []string{"configmap", "configmaps"},
 			expectedFilter: MrrFilter{Kind: "configmap"},
 		},
+		{
+			aliases:        []string{"ns", "namespace", "namespaces"},
+			expectedFilter: MrrFilter{Kind: "namespace"},
+		},
 	}
 
 	for _, test := range tests {
 		for _, alias := range test.aliases {
 			buf.Reset()
-			cmd.RunE(cmd, []string{alias})
-			if !reflect.DeepEqual(tc.lastFilter, test.expectedFilter) {
-				t.Errorf("Running [get %v]: expected filter %v, got %v", alias, test.expectedFilter, tc.lastFilter)
-			}
-			if buf.String() != expectedOutput {
-				t.Errorf("Running [get %v]: output [%v] was not equal to expected [%v]", alias, buf, expectedOutput)
+			err := cmd.RunE(cmd, []string{alias})
+			if err != nil {
+				t.Errorf("Running [get %v]: got error: %v", alias, err)
+			} else {
+				if !reflect.DeepEqual(tc.lastFilter, test.expectedFilter) {
+					t.Errorf("Running [get %v]: expected filter %v, got %v", alias, test.expectedFilter, tc.lastFilter)
+				}
+				if buf.String() != expectedOutput {
+					t.Errorf("Running [get %v]: output [%v] was not equal to expected [%v]", alias, buf, expectedOutput)
+				}
 			}
 		}
 	}
