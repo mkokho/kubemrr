@@ -7,6 +7,7 @@ import (
 	"github.com/mkokho/kubemrr/app"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 )
@@ -20,7 +21,8 @@ var (
 func TestMain(m *testing.M) {
 	log.SetLevel(log.DebugLevel)
 	log.SetFormatter(&log.TextFormatter{})
-	m.Run()
+	code := m.Run()
+	os.Exit(code)
 }
 
 func stream(w http.ResponseWriter, items []string) {
