@@ -186,3 +186,33 @@ func TestGetConfigmaps(t *testing.T) {
 		t.Errorf("Expected %+v, got %+v", expected, res)
 	}
 }
+
+func TestGetNamespaces(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc("/api/v1/namespaces", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `
+			{
+				"items": [
+					{ "metadata": { "name": "x1" } },
+					{ "metadata": { "name": "x2" } }
+				]
+			}`)
+	},
+	)
+
+	res, err := client.GetObjects("namespace")
+	if err != nil {
+		t.Errorf("GetServices returned error: %v", err)
+	}
+
+	expected := []KubeObject{
+		{TypeMeta: TypeMeta{"namespace"}, ObjectMeta: ObjectMeta{Name: "x1"}},
+		{TypeMeta: TypeMeta{"namespace"}, ObjectMeta: ObjectMeta{Name: "x2"}},
+	}
+
+	if !reflect.DeepEqual(res, expected) {
+		t.Errorf("Expected %+v, got %+v", expected, res)
+	}
+}

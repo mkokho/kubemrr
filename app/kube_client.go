@@ -69,6 +69,8 @@ func (kc *DefaultKubeClient) GetObjects(kind string) ([]KubeObject, error) {
 	switch kind {
 	case "configmap":
 		return kc.get("api/v1/configmaps", kind)
+	case "namespace":
+		return kc.get("api/v1/namespaces", kind)
 	default:
 		return []KubeObject{}, fmt.Errorf("unsupported kind: %s", kind)
 	}
