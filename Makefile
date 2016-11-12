@@ -3,7 +3,8 @@
 release: set-version osx linux
 	git commit -am "set version to $(VERSION)"
 	git tag v$(VERSION)
-	git push --follow-tags
+	git push
+	git push --tags
 
 test:
 	go test . ./app
