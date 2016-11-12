@@ -73,6 +73,36 @@ func TestRunWatch(t *testing.T) {
 	}
 }
 
+func TestRunWatchWithOnlyFlag(t *testing.T) {
+	f := NewTestFactory()
+	cmd := NewWatchCommand(f)
+	cmd.Flags().Set("port", "0")
+	cmd.Flags().Set("interval", "3ms")
+	cmd.Flags().Set("only", "pod,namespace")
+	go cmd.RunE(cmd, []string{"http://z.org"})
+	time.Sleep(10 * time.Millisecond)
+
+	for _, kc := range f.kubeClients {
+		for kind, hits := range kc.watchObjectHits {
+			if kind == "pod" && hits < 1 {
+				t.Errorf("Expected to hit [%s] at least 3 times, but was [%d]", kind, hits)
+			}
+			if kind != "pod" && hits > 0 {
+				t.Errorf("Did not expect to hit [%s]", kind)
+			}
+		}
+
+		for kind, hits := range kc.getObjectHits {
+			if kind == "namespace" && hits < 3 {
+				t.Errorf("Expected to hit [%s] at least 3 times, but was [%d]", kind, hits)
+			}
+			if kind != "namespace" && hits > 0 {
+				t.Errorf("Did not expect to hit [%s]", kind)
+			}
+		}
+	}
+}
+
 func TestLoopWatchObjectsFailure(t *testing.T) {
 	c := NewMrrCache()
 	kind := "o"

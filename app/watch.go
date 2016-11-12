@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"net"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -22,7 +23,7 @@ DESCRIPTION:
   On each connection it will listen for changes happened in the Kubernetes cluster.
   The names of the alive resources are available by "get" command.
 
-  Mirrored resources: pods, services, deployments, configmaps
+  Mirrored resources: pods, services, deployments, configmaps, namespaces
 
   By default, "get pod" returns pods from all servers and all namespaces.
   See help for "get" command to know how to filter.
@@ -42,6 +43,7 @@ EXAMPLE:
 
 	AddCommonFlags(watchCmd)
 	watchCmd.Flags().Duration("interval", 30*time.Second, "Interval between requests to the server")
+	watchCmd.Flags().String("only", "", "Coma-separated names of resources to watch, empty to watch all supported")
 	return watchCmd
 }
 
@@ -65,6 +67,11 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) error {
 		return errors.New("could not parse value of --interval")
 	}
 
+	enabledResources, err := cmd.Flags().GetString("only")
+	if err != nil {
+		return errors.New("could not parse value of --only")
+	}
+
 	c := f.MrrCache()
 
 	for i := range args {
@@ -76,20 +83,30 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) error {
 		kc := f.KubeClient(url)
 		log.WithField("server", kc.Server().URL).Info("created client")
 
-		loopWatchObjects(c, kc, "pod")
-		loopWatchObjects(c, kc, "service")
-		loopWatchObjects(c, kc, "deployment")
-		loopGetObjects(c, kc, "configmap", interval)
-		loopGetObjects(c, kc, "namespace", interval)
+		for _, k := range []string{"pod", "service", "deployment"} {
+			if isWatching(k, enabledResources) {
+				loopWatchObjects(c, kc, k)
+			}
+		}
+
+		for _, k := range []string{"configmap", "namespace"} {
+			if isWatching(k, enabledResources) {
+				loopGetObjects(c, kc, k, interval)
+			}
+		}
 	}
 
-	log.WithField("bind", bind).Infof("started to listen", bind)
+	log.WithField("bind", bind).Info("started to listen")
 	err = f.Serve(l, c)
 	if err != nil {
 		return fmt.Errorf("unexpected error: %v", err)
 	}
 
 	return errors.New("kubemrr has stopped")
+}
+
+func isWatching(r string, rs string) bool {
+	return len(rs) == 0 || strings.Contains(rs, r)
 }
 
 func loopWatchObjects(c *MrrCache, kc KubeClient, kind string) {

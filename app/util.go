@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	log "github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 	"io"
@@ -130,6 +129,7 @@ type TestFactory struct {
 func NewTestFactory() *TestFactory {
 	return &TestFactory{
 		kubeClients: make(map[string]*TestKubeClient),
+		mrrCache:    NewMrrCache(),
 	}
 }
 
@@ -146,8 +146,6 @@ func (f *TestFactory) StdOut() io.Writer {
 }
 
 func (f *TestFactory) MrrCache() *MrrCache {
-	log.Printf("cache in factory: %+v", f.mrrCache)
-
 	return f.mrrCache
 }
 
