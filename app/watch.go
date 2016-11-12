@@ -157,14 +157,16 @@ func loopGetObjects(c *MrrCache, kc KubeClient, kind string, interval time.Durat
 			objects, err := kc.GetObjects(kind)
 			if err != nil {
 				l.WithField("error", err).Error("unexpected error while updating objects")
-			} else {
-				l.WithField("objects", objects).Debug("received objects")
+				time.Sleep(10 * time.Second)
+				continue
 			}
 
+			l.WithField("objects", objects).Debug("received objects")
 			c.deleteKubeObjects(kc.Server(), kind)
 			for i := range objects {
 				c.updateKubeObject(kc.Server(), objects[i])
 			}
+			l.Infof("put %d objects into cache", len(objects))
 
 			time.Sleep(interval)
 		}
