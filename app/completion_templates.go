@@ -263,7 +263,7 @@ __kubectl_get_namespaces()
 {
     local template kubectl_out
     template="{{ range .items  }}{{ .metadata.name }} {{ end }}"
-    if kubectl_out=$(echo "default kube-system mc mc-blue mc-green mc-red mm numero ops"); then
+    if kubectl_out=$([[kubemrr_path]] -a [[kubemrr_address]] -p [[kubemrr_port]] --kubectl-flags="$kubectl_line" get namespace); then
         COMPREPLY=( $( compgen -W "${kubectl_out[*]}" -- "$cur" ) )
     fi
 }
@@ -4558,7 +4558,7 @@ __kubectl_get_namespaces()
 {
     local template kubectl_out
     template="{{ range .items  }}{{ .metadata.name }} {{ end }}"
-    if kubectl_out=$(echo "default kube-system mc mc-blue mc-green mc-red mm numero ops"); then
+    if kubectl_out=$([[kubemrr_path]] -a [[kubemrr_address]] -p [[kubemrr_port]] --kubectl-flags="$kubectl_line" get namespace); then
         COMPREPLY=( $( compgen -W "${kubectl_out[*]}" -- "$cur" ) )
     fi
 }
