@@ -69,6 +69,10 @@ func (kc *DefaultKubeClient) GetObjects(kind string) ([]KubeObject, error) {
 	switch kind {
 	case "configmap":
 		return kc.get("api/v1/configmaps", kind)
+	case "service":
+		return kc.get("api/v1/services", kind)
+	case "deployment":
+		return kc.get("/apis/extensions/v1beta1/deployments", kind)
 	case "namespace":
 		return kc.get("api/v1/namespaces", kind)
 	default:

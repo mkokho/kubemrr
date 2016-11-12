@@ -42,7 +42,7 @@ EXAMPLE:
 	}
 
 	AddCommonFlags(watchCmd)
-	watchCmd.Flags().Duration("interval", 30*time.Second, "Interval between requests to the server")
+	watchCmd.Flags().Duration("interval", 2*time.Minute, "Interval between requests to the server")
 	watchCmd.Flags().String("only", "", "Coma-separated names of resources to watch, empty to watch all supported")
 	return watchCmd
 }
@@ -83,13 +83,13 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) error {
 		kc := f.KubeClient(url)
 		log.WithField("server", kc.Server().URL).Info("created client")
 
-		for _, k := range []string{"pod", "service", "deployment"} {
+		for _, k := range []string{"pod"} {
 			if isWatching(k, enabledResources) {
 				loopWatchObjects(c, kc, k)
 			}
 		}
 
-		for _, k := range []string{"configmap", "namespace"} {
+		for _, k := range []string{"service", "deployment", "configmap", "namespace"} {
 			if isWatching(k, enabledResources) {
 				loopGetObjects(c, kc, k, interval)
 			}

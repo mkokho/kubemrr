@@ -60,12 +60,12 @@ func TestRunWatch(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	for s, kc := range f.kubeClients {
-		for _, kind := range []string{"pod", "service", "deployment"} {
+		for _, kind := range []string{"pod"} {
 			if kc.watchObjectHits[kind] != 1 {
 				t.Errorf("Unexpected number of WatchObject requests for [%s] server [%s]: %v", kind, s, kc.watchObjectHits)
 			}
 		}
-		for _, kind := range []string{"configmap", "namespace"} {
+		for _, kind := range []string{"configmap", "namespace", "service", "deployment"} {
 			if kc.getObjectHits[kind] < 3 {
 				t.Errorf("Expected at least 3 GetObject requests for [%s] server [%s], hits were %v", kind, s, kc.getObjectHits)
 			}

@@ -50,10 +50,10 @@ func k8sPods(w http.ResponseWriter, r *http.Request) {
 }
 
 func k8sServices(w http.ResponseWriter, r *http.Request) {
-	stream(w, []string{`{"type": "ADDED", "object": {"kind":"service", "metadata": {"name": "service1"}}}`})
+	fmt.Fprint(w, `{ "items": [ { "metadata": { "name": "service1" } } ] }`)
 }
 func k8sDeployments(w http.ResponseWriter, r *http.Request) {
-	stream(w, []string{`{"type": "ADDED", "object": {"kind":"deployment", "metadata": {"name": "deployment1"}}}`})
+	fmt.Fprint(w, `{ "items": [ { "metadata": { "name": "deployment1" } } ] }`)
 }
 
 func k8sConfigmaps(w http.ResponseWriter, r *http.Request) {
