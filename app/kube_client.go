@@ -183,14 +183,15 @@ func (c *DefaultKubeClient) do(req *http.Request, v interface{}) error {
 type TestKubeClient struct {
 	baseURL *url.URL
 
-	objectEvents     []*ObjectEvent
-	makeObjectEvents func() []*ObjectEvent
+	objectEvents  []*ObjectEvent
+	objectEventsF func() []*ObjectEvent
 
 	watchObjectHits  map[string]int
 	watchObjectLock  *sync.RWMutex
 	watchObjectError error
 
 	objects       []KubeObject
+	objectsF      func() []KubeObject
 	getObjectHits map[string]int
 }
 
@@ -199,8 +200,9 @@ func NewTestKubeClient() *TestKubeClient {
 	kc.baseURL, _ = url.Parse(fmt.Sprintf("random-url-%d", rand.Intn(999)))
 	kc.watchObjectLock = &sync.RWMutex{}
 	kc.watchObjectHits = map[string]int{}
-	kc.makeObjectEvents = func() []*ObjectEvent { return []*ObjectEvent{} }
+	kc.objectEventsF = func() []*ObjectEvent { return []*ObjectEvent{} }
 	kc.objects = []KubeObject{}
+	kc.objectsF = func() []KubeObject { return []KubeObject{} }
 	kc.getObjectHits = map[string]int{}
 	return kc
 }
@@ -218,7 +220,7 @@ func (kc *TestKubeClient) WatchObjects(kind string, out chan *ObjectEvent) error
 		out <- kc.objectEvents[i]
 	}
 
-	for _, o := range kc.makeObjectEvents() {
+	for _, o := range kc.objectEventsF() {
 		out <- o
 	}
 
@@ -234,5 +236,9 @@ func (kc *TestKubeClient) GetObjects(kind string) ([]KubeObject, error) {
 	kc.getObjectHits[kind] += 1
 	kc.watchObjectLock.Unlock()
 
-	return kc.objects, nil
+	if len(kc.objects) == 0 {
+		return kc.objectsF(), nil
+	} else {
+		return kc.objects, nil
+	}
 }

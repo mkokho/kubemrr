@@ -161,6 +161,7 @@ func loopGetObjects(c *MrrCache, kc KubeClient, kind string, interval time.Durat
 				l.WithField("objects", objects).Debug("received objects")
 			}
 
+			c.deleteKubeObjects(kc.Server(), kind)
 			for i := range objects {
 				c.updateKubeObject(kc.Server(), objects[i])
 			}

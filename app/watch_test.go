@@ -108,7 +108,7 @@ func TestLoopWatchObjectsFailure(t *testing.T) {
 	kind := "o"
 	kc := NewTestKubeClient()
 	kc.watchObjectError = errors.New("Test Error")
-	kc.makeObjectEvents = func() []*ObjectEvent {
+	kc.objectEventsF = func() []*ObjectEvent {
 		randomName := fmt.Sprintf("r-%d", rand.Intn(9999))
 		return []*ObjectEvent{
 			&ObjectEvent{Added, &KubeObject{ObjectMeta: ObjectMeta{Name: randomName}, TypeMeta: TypeMeta{kind}}},
@@ -156,17 +156,28 @@ func TestLoopWatchObjects(t *testing.T) {
 func TestLoopGetObjects(t *testing.T) {
 	c := NewMrrCache()
 	kc := NewTestKubeClient()
-	kc.objects = []KubeObject{
+	kind := ""
+
+	finalObjects := []KubeObject{
 		{ObjectMeta: ObjectMeta{Name: "a1"}},
 		{ObjectMeta: ObjectMeta{Name: "a2"}},
 	}
+	kc.objectsF = func() []KubeObject {
+		if kc.getObjectHits[kind] > 2 {
+			return finalObjects
+		} else {
+			return []KubeObject{
+				{ObjectMeta: ObjectMeta{Name: fmt.Sprintf("rand-%d", rand.Intn(999))}},
+			}
+		}
+	}
 
-	loopGetObjects(c, kc, "", 1*time.Second)
+	loopGetObjects(c, kc, kind, 3*time.Millisecond)
 	time.Sleep(10 * time.Millisecond)
 
 	actual := c.objects[kc.Server()]
-	expected := kc.objects
+	expected := finalObjects
 	if !reflect.DeepEqual(actual, expected) {
-		t.Errorf("Expected %+v, got %+v", expected, actual)
+		t.Errorf("Expected \n%+v \n Got \n%+v", expected, actual)
 	}
 }
