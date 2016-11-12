@@ -2,7 +2,7 @@
 
 release: set-version osx linux
 	git commit -am "set version to $(VERSION)"
-	git tag $(VERSION)
+	git tag v$(VERSION)
 	git push --follow-tags
 
 test:
