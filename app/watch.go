@@ -80,6 +80,7 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) error {
 		loopWatchObjects(c, kc, "service")
 		loopWatchObjects(c, kc, "deployment")
 		loopGetObjects(c, kc, "configmap", interval)
+		loopGetObjects(c, kc, "namespace", interval)
 	}
 
 	log.WithField("bind", bind).Infof("started to listen", bind)
