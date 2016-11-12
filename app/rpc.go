@@ -53,7 +53,7 @@ func (c *MrrCache) Objects(f *MrrFilter, os *[]KubeObject) error {
 	for _, k := range keys {
 		for _, o := range c.objects[k] {
 			if strings.EqualFold(o.Kind, f.Kind) &&
-				(f.Namespace == "" || strings.EqualFold(o.Namespace, f.Namespace)) {
+				(f.Namespace == "" || o.Kind == "namespace" || strings.EqualFold(o.Namespace, f.Namespace)) {
 				res = append(res, o)
 			}
 		}

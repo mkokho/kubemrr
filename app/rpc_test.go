@@ -36,10 +36,10 @@ func setupRPC() {
 
 func fillCache(c *MrrCache) {
 	for _, s := range []string{"server1", "server2", "server3"} {
+		ks := KubeServer{s}
 		for _, ns := range []string{"ns1", "ns2", "ns3"} {
 			for _, kind := range []string{"pod", "service", "deployment"} {
 				for _, name := range []string{"a", "b", "c"} {
-					ks := KubeServer{s}
 					if c.objects[ks] == nil {
 						c.objects[ks] = make([]KubeObject, 0)
 					}
@@ -48,6 +48,14 @@ func fillCache(c *MrrCache) {
 					c.objects[ks] = append(c.objects[ks], o)
 				}
 			}
+		}
+	}
+
+	for _, s := range []string{"server1", "server2"} {
+		ks := KubeServer{s}
+		for _, name := range []string{"ns1", "ns2"} {
+			o := KubeObject{TypeMeta{"namespace"}, ObjectMeta{Name: s + "-" + name}}
+			c.objects[ks] = append(c.objects[ks], o)
 		}
 	}
 }
@@ -141,6 +149,22 @@ func TestClientObjects(t *testing.T) {
 				{TypeMeta{"pod"}, ObjectMeta{"server1-c", "ns3", ""}},
 			},
 		},
+		{
+			filter: MrrFilter{"server1", "should be ignored", "namespace"},
+			expected: []KubeObject{
+				{TypeMeta{"namespace"}, ObjectMeta{"server1-ns1", "", ""}},
+				{TypeMeta{"namespace"}, ObjectMeta{"server1-ns2", "", ""}},
+			},
+		},
+		{
+			filter: MrrFilter{"", "should be ignored", "namespace"},
+			expected: []KubeObject{
+				{TypeMeta{"namespace"}, ObjectMeta{"server1-ns1", "", ""}},
+				{TypeMeta{"namespace"}, ObjectMeta{"server1-ns2", "", ""}},
+				{TypeMeta{"namespace"}, ObjectMeta{"server2-ns1", "", ""}},
+				{TypeMeta{"namespace"}, ObjectMeta{"server2-ns2", "", ""}},
+			},
+		},
 	}
 
 	for i, test := range tests {
@@ -150,7 +174,7 @@ func TestClientObjects(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(actual, test.expected) {
-			t.Errorf("Test %d: expected %#v, found %#v", i, test.expected, actual)
+			t.Errorf("Test %d: \n Expected \n %+v\n Found %+v", i, test.expected, actual)
 		}
 	}
 }
