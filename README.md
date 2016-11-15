@@ -19,12 +19,17 @@ To start watching a server:
 kubemrr watch https://kube-us.example.org
 ``` 
 
-To make completion script that talks to `kubemrr`:
+To make completion script that talks to `kubemrr` shell:
 ```
 alias kus='kubectl --context us'
 kubemrr completion bash --kubectl-alias=kus > kus
 sudo cp kus /etc/bash_completion.d
 ```
+
+Note that you need to have bash completion installed. It shoud be available on a Linux distribution. On a Mac, 
+install with `brew install bash-completion`.
+
+Replace `bash` with `zsh` in the above command to generate completion script for `zsh` shell.
 
 To test it:
 ```
@@ -42,8 +47,11 @@ kubemrr completion bash --address=10.5.1.6 --kubectl-alias=kus > kus
 
 # Download
 - OSX: 
+```
+curl -O https://github.com/mkokho/kubemrr/raw/v1.0.0/releases/darwin/amd64/kubemrr
+```
 
-```wget https://github.com/mkokho/kubemrr/raw/v1.0.0/releases/darwin/amd64/kubemrr```
 - Linux: 
-
-```wget https://github.com/mkokho/kubemrr/raw/v1.0.0/releases/linux/amd64/kubemrr```
+```
+curl -O https://github.com/mkokho/kubemrr/raw/v1.0.0/releases/linux/amd64/kubemrr
+```
