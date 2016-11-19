@@ -12,7 +12,7 @@ to Kubernetes API Server. If your server is on a different continent you might w
 To reduce the delay, `kubemrr` keeps names of resources locally. We will make a completion script which talks to `kubemrr` 
 instead of real Kubernetes API server.
 
-![o-low](https://cloud.githubusercontent.com/assets/10990119/20301466/415b2824-ab88-11e6-8549-1ad3fbeb8b03.gif)
+![b](https://cloud.githubusercontent.com/assets/10990119/20454663/0666ec22-aeac-11e6-9d7d-550313fb4b60.gif)
 
 # Example
 
