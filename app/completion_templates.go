@@ -211,14 +211,6 @@ __handle_word()
     fi
     __debug "${FUNCNAME[0]}: c is $c words[c] is ${words[c]}"
 
-		case "${words[c-1]}" in
-        deployment | po | pod | pods | svc | service | services | configmap | configmaps)
-        	__handle_reply
-      		return
-      		;;
-        *)
-            ;;
-    esac
 
     if [[ "${words[c]}" == -* ]]; then
         __handle_flag
@@ -227,6 +219,16 @@ __handle_word()
     elif [[ $c -eq 0 ]] && __contains_word "$(basename "${words[c]}")" "${commands[@]}"; then
         __handle_command
     else
+        if [[ c -gt 0 ]]; then
+            case "${words[c-1]}" in
+                deployment | po | pod | pods | svc | service | services | configmap | configmaps)
+            	      __handle_reply
+      	    	      return
+      	            ;;
+                *)
+                    ;;
+            esac
+        fi
         __handle_noun
     fi
     __handle_word
@@ -4513,15 +4515,17 @@ __handle_word()
     elif [[ $c -eq 0 ]] && __contains_word "$(basename "${words[c]}")" "${commands[@]}"; then
         __handle_command
     else
-			case "${words[c-1]}" in
-				deployment | po | pod | pods | svc | service | services | configmap | configmaps)
-					__handle_reply
-					return
-					;;
-				*)
-          __handle_noun
-					;;
-			esac
+        if [[ c -gt 0 ]]; then
+            case "${words[c-1]}" in
+                deployment | po | pod | pods | svc | service | services | configmap | configmaps)
+            	      __handle_reply
+      	    	      return
+      	            ;;
+                *)
+                    ;;
+            esac
+        fi
+        __handle_noun
     fi
 
     __handle_word
