@@ -55,5 +55,5 @@ curl -O https://raw.githubusercontent.com/mkokho/kubemrr/v1.1.0/releases/darwin/
 
 - Linux: 
 ```
-curl -O https://raw.githubusercontent.com/mkokho/kubemrr/v1.1.0/releases/darwin/amd64/kubemrr
+curl -O https://raw.githubusercontent.com/mkokho/kubemrr/v1.1.0/releases/linux/amd64/kubemrr
 ```
