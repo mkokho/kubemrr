@@ -23,4 +23,4 @@ ifndef VERSION
 endif
 	if ! git diff-index --quiet HEAD ; then echo "you have uncommitted changes"; exit 1 ; fi
 	sed -i s:'VERSION = "[^"]*"':'VERSION = "$(VERSION)"':g app/version.go
-	sed -i s:/raw/v[^/]*:/raw/v$(VERSION):g README.md
+	sed -i s:/mkokho/kubemrr/v[^/]*:/mkokho/kubemrr/v$(VERSION):g README.md
