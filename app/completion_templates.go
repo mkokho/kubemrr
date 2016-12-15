@@ -274,7 +274,7 @@ __unalias()
 {
     __debug "${FUNCNAME[0]}: $1"
     local args=($1)
-    kubectl_line=$(alias | grep "alias ${args[0]}" | grep -o kubectl[^\'\"]*)
+    kubectl_line=$(alias | grep "alias ${args[0]}" | grep -o "kubectl[^']*")
     kubectl_line="$kubectl_line $1"
 }
 
