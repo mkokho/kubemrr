@@ -2,6 +2,10 @@
 
 `kubemrr` mirrors description of Kubernetes resources for blazingly fast auto-completion.
 
+Feel free to suggest improvements, I'm here to work on them 👍
+
+# Details
+
 Bash  has the _programmable completion_ feature which permits typing a partial command, 
 then pressing the [TAB] key to auto-complete the command sequence.To use the feature, you need to write a completion script 
 and place it in /etc/bash_completion.d folder ([docs](http://www.tldp.org/LDP/abs/html/tabexpansion.html),
@@ -9,8 +13,8 @@ and place it in /etc/bash_completion.d folder ([docs](http://www.tldp.org/LDP/ab
 Fortunately, `kubectl` comes with a command to generate completion script ([kubectl completion](http://kubernetes.io/docs/user-guide/kubectl/kubectl_completion/)). 
 The script works extremely well, but slow, because each time you hit [TAB] it sends a request 
 to Kubernetes API Server. If your server is on a different continent you might wait for up to 2 seconds. 
-To reduce the delay, `kubemrr` keeps names of resources locally. We will make a completion script which talks to `kubemrr` 
-instead of real Kubernetes API server.
+To reduce the delay, `kubemrr` keeps names of resources locally. See how to make a completion script which talks to `kubemrr` 
+instead of real Kubernetes API server in the example below.
 
 ![b](https://cloud.githubusercontent.com/assets/10990119/20454663/0666ec22-aeac-11e6-9d7d-550313fb4b60.gif)
 
