@@ -2,6 +2,7 @@ package app
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -41,11 +42,15 @@ type DefaultKubeClient struct {
 }
 
 func NewKubeClient(url *url.URL) KubeClient {
-	c := &DefaultKubeClient{
-		client:  http.DefaultClient,
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	httpClient := &http.Client{Transport: tr}
+
+	return &DefaultKubeClient{
+		client:  httpClient,
 		baseURL: url,
 	}
-	return c
 }
 
 func (kc *DefaultKubeClient) Server() KubeServer {
