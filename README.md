@@ -50,10 +50,10 @@ kubemrr completion bash --address=10.5.1.6 --kubectl-alias=kus > kus
 # Download
 - OSX: 
 ```
-curl -O https://raw.githubusercontent.com/mkokho/kubemrr/v1.1.1/releases/darwin/amd64/kubemrr
+curl -O https://raw.githubusercontent.com/mkokho/kubemrr/v1.2.0-beta1/releases/darwin/amd64/kubemrr
 ```
 
 - Linux: 
 ```
-curl -O https://raw.githubusercontent.com/mkokho/kubemrr/v1.1.1/releases/linux/amd64/kubemrr
+curl -O https://raw.githubusercontent.com/mkokho/kubemrr/v1.2.0-beta1/releases/linux/amd64/kubemrr
 ```
