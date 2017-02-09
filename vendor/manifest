@@ -200,6 +200,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/stretchr/testify",
+			"repository": "https://github.com/stretchr/testify",
+			"vcs": "git",
+			"revision": "4d4bfba8f1d1027c4fdbe371823030df51419987",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/ugorji/go/codec",
 			"repository": "https://github.com/ugorji/go",
 			"vcs": "git",
