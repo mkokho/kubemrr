@@ -57,7 +57,7 @@ func TestRunWatch(t *testing.T) {
 	cmd.Flags().Set("port", "0")
 	cmd.Flags().Set("interval", "3ms")
 	go cmd.RunE(cmd, servers)
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(50 * time.Millisecond)
 
 	for s, kc := range f.kubeClients {
 		for _, kind := range []string{"pod"} {
@@ -80,7 +80,7 @@ func TestRunWatchWithOnlyFlag(t *testing.T) {
 	cmd.Flags().Set("interval", "3ms")
 	cmd.Flags().Set("only", "pod,namespace")
 	go cmd.RunE(cmd, []string{"http://z.org"})
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(50 * time.Millisecond)
 
 	for _, kc := range f.kubeClients {
 		for kind, hits := range kc.watchObjectHits {
@@ -109,15 +109,14 @@ func TestLoopWatchObjectsFailure(t *testing.T) {
 	kc := NewTestKubeClient()
 	kc.watchObjectError = errors.New("Test Error")
 	kc.objectEventsF = func() []*ObjectEvent {
-		randomName := fmt.Sprintf("r-%d", rand.Intn(9999))
 		return []*ObjectEvent{
-			&ObjectEvent{Added, &KubeObject{ObjectMeta: ObjectMeta{Name: randomName}, TypeMeta: TypeMeta{kind}}},
+			&ObjectEvent{Added, &KubeObject{ObjectMeta: ObjectMeta{Name: "object"}, TypeMeta: TypeMeta{kind}}},
 		}
 	}
 
 	loopWatchObjects(c, kc, kind)
 
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(50 * time.Millisecond)
 	if kc.watchObjectHits[kind] < 2 {
 		t.Errorf("Not enough WatchObjects calls")
 	}
@@ -143,7 +142,7 @@ func TestLoopWatchObjects(t *testing.T) {
 	}
 
 	loopWatchObjects(c, kc, "does not matter")
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(50 * time.Millisecond)
 
 	//order matters in slice
 	expected := []KubeObject{*kc.objectEvents[4].Object, *kc.objectEvents[3].Object, *kc.objectEvents[7].Object}
@@ -173,7 +172,7 @@ func TestLoopGetObjects(t *testing.T) {
 	}
 
 	loopGetObjects(c, kc, kind, 3*time.Millisecond)
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(50 * time.Millisecond)
 
 	actual := c.objects[kc.Server()]
 	expected := finalObjects
