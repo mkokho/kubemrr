@@ -219,23 +219,3 @@ func TestRunGetClientError(t *testing.T) {
 		}
 	}
 }
-
-func TestConfigMakeFilter(t *testing.T) {
-	conf := Config{
-		CurrentContext: "prod",
-		Contexts: []ContextWrap{
-			{"dev", Context{Cluster: "cluster_2", Namespace: "red"}},
-			{"prod", Context{Cluster: "cluster_1", Namespace: "blue"}},
-		},
-		Clusters: []ClusterWrap{
-			{"cluster_1", Cluster{Server: "https://foo.com:8443"}},
-			{"cluster_2", Cluster{Server: "https://bar.com"}},
-		},
-	}
-
-	expected := MrrFilter{Server: "https://foo.com:8443", Namespace: "blue"}
-	actual := conf.makeFilter()
-	if !reflect.DeepEqual(expected, actual) {
-		t.Errorf("Expected %+v, got %+v", expected, actual)
-	}
-}
