@@ -40,11 +40,13 @@ func (s KubeServers) Swap(i, j int) {
 type Config struct {
 	Clusters       []ClusterWrap `yaml:"clusters"`
 	Contexts       []ContextWrap `yaml:"contexts"`
+	Users          []UserWrap    `yaml:"users"`
 	CurrentContext string        `yaml:"current-context"`
 }
 
 type Cluster struct {
-	Server string `yaml:"server"`
+	Server               string `yaml:"server"`
+	CertificateAuthority string `yaml:"certificate-authority"`
 }
 
 type ClusterWrap struct {
@@ -55,11 +57,22 @@ type ClusterWrap struct {
 type Context struct {
 	Cluster   string `yaml:"cluster"`
 	Namespace string `yaml:"namespace"`
+	User      string `yaml:"user"`
 }
 
 type ContextWrap struct {
-	Name    string  `json:"name"`
+	Name    string  `yaml:"name"`
 	Context Context `yaml:"context"`
+}
+
+type User struct {
+	ClientCertificate string `yaml:"client-certificate"`
+	ClientKey         string `yaml:"client-key"`
+}
+
+type UserWrap struct {
+	Name string `yaml:"name"`
+	User User   `yaml:"user"`
 }
 
 func (c *Config) makeFilter() MrrFilter {

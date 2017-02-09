@@ -11,6 +11,8 @@ import (
 	"net/http"
 	"net/url"
 	"sync"
+
+	"github.com/kubernetes/client-go/transport"
 )
 
 type EventType string
@@ -42,6 +44,7 @@ type DefaultKubeClient struct {
 }
 
 func NewKubeClient(url *url.URL) KubeClient {
+	fmt.Printf("%+v, ", transport.TLSConfig{})
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}

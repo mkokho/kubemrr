@@ -104,13 +104,13 @@ func TestRunGetWithKubectlFlags(t *testing.T) {
 	f.kubeconfig = Config{
 		CurrentContext: "c1",
 		Contexts: []ContextWrap{
-			{"c1", Context{"cluster_1", "ns1"}},
-			{"c-2", Context{"cluster_2", "ns2"}},
+			{"c1", Context{Cluster: "cluster_1", Namespace: "ns1"}},
+			{"c-2", Context{Cluster: "cluster_2", Namespace: "ns2"}},
 		},
 		Clusters: []ClusterWrap{
-			{"cluster_1", Cluster{"x1.com"}},
-			{"cluster_2", Cluster{"x2.com"}},
-			{"cluster_3", Cluster{"x3.com"}},
+			{"cluster_1", Cluster{Server: "x1.com"}},
+			{"cluster_2", Cluster{Server: "x2.com"}},
+			{"cluster_3", Cluster{Server: "x3.com"}},
 		},
 	}
 	cmd := NewGetCommand(f)
@@ -224,12 +224,12 @@ func TestConfigMakeFilter(t *testing.T) {
 	conf := Config{
 		CurrentContext: "prod",
 		Contexts: []ContextWrap{
-			{"dev", Context{"cluster_2", "red"}},
-			{"prod", Context{"cluster_1", "blue"}},
+			{"dev", Context{Cluster: "cluster_2", Namespace: "red"}},
+			{"prod", Context{Cluster: "cluster_1", Namespace: "blue"}},
 		},
 		Clusters: []ClusterWrap{
-			{"cluster_1", Cluster{"https://foo.com:8443"}},
-			{"cluster_2", Cluster{"https://bar.com"}},
+			{"cluster_1", Cluster{Server: "https://foo.com:8443"}},
+			{"cluster_2", Cluster{Server: "https://bar.com"}},
 		},
 	}
 

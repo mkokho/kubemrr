@@ -1,7 +1,7 @@
 package app
 
 import (
-	"reflect"
+	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
 )
@@ -44,16 +44,18 @@ func TestParseKubeConfig(t *testing.T) {
 	expected := Config{
 		CurrentContext: "prod",
 		Contexts: []ContextWrap{
-			{"dev", Context{"cluster_2", "red"}},
-			{"prod", Context{"cluster_1", "blue"}},
+			{"dev", Context{"cluster_2", "red", "user_2"}},
+			{"prod", Context{"cluster_1", "blue", "user_1"}},
 		},
 		Clusters: []ClusterWrap{
-			{"cluster_1", Cluster{"https://foo.com"}},
-			{"cluster_2", Cluster{"https://bar.com"}},
+			{"cluster_1", Cluster{"https://foo.com", "ca1"}},
+			{"cluster_2", Cluster{"https://bar.com", "ca2"}},
+		},
+		Users: []UserWrap{
+			{"user_1", User{"cert1", "key1"}},
+			{"user_2", User{"cert2", "key2"}},
 		},
 	}
 
-	if !reflect.DeepEqual(expected, actual) {
-		t.Errorf("Expected %+v, got %+v", expected, actual)
-	}
+	assert.Equal(t, expected, actual)
 }
