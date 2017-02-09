@@ -1,5 +1,12 @@
 package app
 
+import (
+	"crypto/tls"
+	"crypto/x509"
+	"fmt"
+	"io/ioutil"
+)
+
 type ObjectMeta struct {
 	Name            string `json:"name,omitempty"`
 	Namespace       string `json:"namespace,omitempty"`
@@ -76,6 +83,16 @@ type UserWrap struct {
 }
 
 func (c *Config) makeFilter() MrrFilter {
+	context := c.getCurrentContext()
+	cluster := c.getCluster(context.Cluster)
+
+	return MrrFilter{
+		Namespace: context.Namespace,
+		Server:    cluster.Server,
+	}
+}
+
+func (c *Config) getCurrentContext() Context {
 	var context Context
 	for i := range c.Contexts {
 		if c.Contexts[i].Name == c.CurrentContext {
@@ -83,13 +100,7 @@ func (c *Config) makeFilter() MrrFilter {
 			break
 		}
 	}
-
-	cluster := c.getCluster(context.Cluster)
-
-	return MrrFilter{
-		Namespace: context.Namespace,
-		Server:    cluster.Server,
-	}
+	return context
 }
 
 func (c *Config) getCluster(name string) Cluster {
@@ -101,4 +112,51 @@ func (c *Config) getCluster(name string) Cluster {
 		}
 	}
 	return cluster
+}
+
+func (c *Config) getUser(name string) User {
+	var user User
+	for i := range c.Users {
+		if c.Users[i].Name == name {
+			user = c.Users[i].User
+			break
+		}
+	}
+	return user
+}
+
+func (cfg *Config) GenerateTLSConfig() (*tls.Config, error) {
+	tlsConfig := &tls.Config{InsecureSkipVerify: true}
+	context := cfg.getCurrentContext()
+	c := cfg.getCluster(context.Cluster)
+	u := cfg.getUser(context.User)
+
+	// scrape target's certificate properly.
+	if len(c.CertificateAuthority) > 0 {
+		caCertPool := x509.NewCertPool()
+		caCert, err := ioutil.ReadFile(c.CertificateAuthority)
+		if err != nil {
+			return nil, fmt.Errorf("unable to use specified CA cert %s: %s", c.CertificateAuthority, err)
+		}
+		ok := caCertPool.AppendCertsFromPEM(caCert)
+		if !ok {
+			return nil, fmt.Errorf("unable to parse CA cert %s", c.CertificateAuthority)
+		}
+		tlsConfig.RootCAs = caCertPool
+	}
+
+	if len(u.ClientCertificate) > 0 && len(u.ClientKey) == 0 {
+		return nil, fmt.Errorf("client cert file %q specified without client key file", u.ClientCertificate)
+	} else if len(u.ClientKey) > 0 && len(u.ClientCertificate) == 0 {
+		return nil, fmt.Errorf("client key file %q specified without client cert file", u.ClientKey)
+	} else if len(u.ClientCertificate) > 0 && len(u.ClientKey) > 0 {
+		cert, err := tls.LoadX509KeyPair(u.ClientCertificate, u.ClientKey)
+		if err != nil {
+			return nil, fmt.Errorf("unable to use specified client cert (%s) & key (%s): %s", u.ClientCertificate, u.ClientKey, err)
+		}
+		tlsConfig.Certificates = []tls.Certificate{cert}
+	}
+	tlsConfig.BuildNameToCertificate()
+
+	return tlsConfig, nil
 }

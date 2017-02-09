@@ -77,3 +77,19 @@ func TestConfigMakeFilter(t *testing.T) {
 	actual := conf.makeFilter()
 	assert.Equal(t, expected, actual)
 }
+
+func TestConfigMakeTLSConfig(t *testing.T) {
+	cfg := Config{
+		CurrentContext: "x",
+		Contexts:       []ContextWrap{{"x", Context{Cluster: "cluster", User: "user"}}},
+		Clusters:       []ClusterWrap{{"cluster", Cluster{CertificateAuthority: "test_data/ca.pem"}}},
+		Users:          []UserWrap{{"user", User{"test_data/cert.pem", "test_data/key.pem"}}},
+	}
+
+	tls, err := cfg.GenerateTLSConfig()
+
+	if assert.NoError(t, err) {
+		assert.Equal(t, 1, len(tls.RootCAs.Subjects()), "must have parsed Certificate Authority")
+	}
+	assert.Equal(t, true, tls.InsecureSkipVerify, "for now, it is alway skip verify")
+}
