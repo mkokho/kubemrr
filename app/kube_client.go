@@ -2,7 +2,6 @@ package app
 
 import (
 	"bytes"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,8 +10,6 @@ import (
 	"net/http"
 	"net/url"
 	"sync"
-
-	"github.com/kubernetes/client-go/transport"
 )
 
 type EventType string
@@ -47,9 +44,9 @@ type DefaultKubeClient struct {
 //It talks to only one server, and uses configuration of the current context in the
 //given config
 func NewKubeClient(config *Config) KubeClient {
-	fmt.Printf("%+v, ", transport.TLSConfig{})
+	tlsConfig, _ := config.GenerateTLSConfig()
 	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		TLSClientConfig: tlsConfig,
 	}
 	httpClient := &http.Client{Transport: tr}
 

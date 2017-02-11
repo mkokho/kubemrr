@@ -113,6 +113,17 @@ func (c *Config) getCurrentContext() Context {
 	return context
 }
 
+func (c *Config) getContext(name string) *Context {
+	var context *Context
+	for i := range c.Contexts {
+		if c.Contexts[i].Name == name {
+			context = &c.Contexts[i].Context
+			break
+		}
+	}
+	return context
+}
+
 func (c *Config) getCurrentCluster() Cluster {
 	return c.getCluster(c.getCurrentContext().Cluster)
 }
@@ -145,7 +156,6 @@ func (cfg *Config) GenerateTLSConfig() (*tls.Config, error) {
 	c := cfg.getCluster(context.Cluster)
 	u := cfg.getUser(context.User)
 
-	// scrape target's certificate properly.
 	if len(c.CertificateAuthority) > 0 {
 		caCertPool := x509.NewCertPool()
 		caCert, err := ioutil.ReadFile(c.CertificateAuthority)

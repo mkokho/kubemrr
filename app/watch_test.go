@@ -15,6 +15,7 @@ func TestRunWatchInvalidURLArgs(t *testing.T) {
 	f := NewTestFactory()
 	cmd := NewWatchCommand(f)
 	cmd.Flags().Set("port", "0")
+	cmd.Flags().Set("kubeconfig", "test_data/kubeconfig_valid")
 
 	tests := []struct {
 		args []string
@@ -23,10 +24,13 @@ func TestRunWatchInvalidURLArgs(t *testing.T) {
 			args: []string{},
 		},
 		{
-			args: []string{"not-a-url"},
+			args: []string{"dev", "not-context"},
 		},
 		{
-			args: []string{"http://k8s-server_1.com", "not-a-url"},
+			args: []string{"not-context", "dev"},
+		},
+		{
+			args: []string{"http://k8s.server1.com", "not-a-url"},
 		},
 	}
 
@@ -42,8 +46,8 @@ func TestRunWatch(t *testing.T) {
 	f.mrrCache = c
 
 	servers := []string{
-		"http://k8s-server_1.com",
-		"http://k8s-server_2.com",
+		"http://k8s.server1.com",
+		"http://k8s.server2.com",
 	}
 
 	for _, s := range servers {
@@ -70,6 +74,26 @@ func TestRunWatch(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestRunWatchContextMode(t *testing.T) {
+	f := NewTestFactory()
+	cmd := NewWatchCommand(f)
+	cmd.Flags().Set("port", "0")
+	cmd.Flags().Set("mode", "context")
+	cmd.Flags().Set("kubeconfig", "test_data/kubeconfig_valid")
+
+	go cmd.RunE(cmd, []string{"prod", "dev"})
+	time.Sleep(50 * time.Millisecond)
+
+	//copied from kubeconfig_valid file
+	expectedURLs := []string{"https://foo.com", "https://bar.com"}
+	actualURLs := []string{}
+	for _, kc := range f.kubeClients {
+		actualURLs = append(actualURLs, kc.baseURL.String())
+	}
+
+	assert.Equal(t, expectedURLs, actualURLs)
 }
 
 func TestRunWatchWithOnlyFlag(t *testing.T) {

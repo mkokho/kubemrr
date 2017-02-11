@@ -10,6 +10,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/asaskevich/govalidator",
+			"repository": "https://github.com/asaskevich/govalidator",
+			"vcs": "git",
+			"revision": "fdf19785fd3558d619ef81212f5edf1d6c2a5911",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/coreos/go-etcd/etcd",
 			"repository": "https://github.com/coreos/go-etcd",
 			"vcs": "git",

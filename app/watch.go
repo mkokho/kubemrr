@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
+	"github.com/asaskevich/govalidator"
 	"github.com/spf13/cobra"
 	"net"
 	"strings"
@@ -73,10 +74,23 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) error {
 
 	c := f.MrrCache()
 
-	for i := range args {
-		config, err := NewConfigFromURL(args[i])
-		if err != nil {
-			return fmt.Errorf("could not watch %s: %s", args[i], err)
+	for _, arg := range args {
+		var config *Config
+		if govalidator.IsURL(arg) {
+			config, err = NewConfigFromURL(arg)
+			if err != nil {
+				return fmt.Errorf("url %s is not valid: %s", arg, err)
+			}
+		} else {
+			config, err = GetKubeconfig(cmd)
+			if err != nil {
+				return fmt.Errorf("cannot parse kubeconfig file %s: %s", arg, err)
+			}
+			context := config.getContext(arg)
+			if context == nil {
+				return fmt.Errorf("cannot find context %s in kubeconfig", arg)
+			}
+			config.CurrentContext = arg
 		}
 
 		kc := f.KubeClient(config)

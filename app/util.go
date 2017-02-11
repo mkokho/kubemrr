@@ -16,6 +16,7 @@ import (
 
 func AddCommonFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("address", "a", "127.0.0.1", "The IP address where mirror is accessible")
+	cmd.Flags().String("kubeconfig", "~/.kube/config", "Path to the kubeconfig file")
 	cmd.Flags().IntP("port", "p", 33033, "The port on which mirror is accessible")
 	cmd.Flags().BoolP("verbose", "v", false, "Enables verbose output")
 }
@@ -42,6 +43,20 @@ func GetBind(cmd *cobra.Command) (string, error) {
 	}
 
 	return fmt.Sprintf("%s:%d", address, port), nil
+}
+
+func GetKubeconfig(cmd *cobra.Command) (*Config, error) {
+	file, err := cmd.Flags().GetString("kubeconfig")
+	if err != nil {
+		return nil, err
+	}
+
+	config, err := parseKubeConfig(file)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse kubeconfig file %s: %s", file, err)
+	}
+
+	return &config, nil
 }
 
 type Factory interface {
