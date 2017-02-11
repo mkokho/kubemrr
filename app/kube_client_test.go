@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"reflect"
 	"testing"
 )
@@ -20,9 +19,9 @@ func setup() {
 	mux = http.NewServeMux()
 	server = httptest.NewServer(mux)
 
-	url, _ := url.Parse(server.URL)
+	cfg, _ := NewConfigFromURL(server.URL)
 	f := &DefaultFactory{}
-	client = f.KubeClient(url)
+	client = f.KubeClient(cfg)
 }
 
 // teardown closes the test HTTP server.

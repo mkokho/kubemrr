@@ -82,6 +82,16 @@ type UserWrap struct {
 	User User   `yaml:"user"`
 }
 
+func NewConfigFromURL(url string) (*Config, error) {
+	config := Config{}
+	cl := ClusterWrap{url, Cluster{Server: url}}
+	ctx := ContextWrap{url, Context{Cluster: cl.Name}}
+	config.Clusters = append(config.Clusters, cl)
+	config.Contexts = append(config.Contexts, ctx)
+	config.CurrentContext = url
+	return &config, nil
+}
+
 func (c *Config) makeFilter() MrrFilter {
 	context := c.getCurrentContext()
 	cluster := c.getCluster(context.Cluster)
@@ -101,6 +111,10 @@ func (c *Config) getCurrentContext() Context {
 		}
 	}
 	return context
+}
+
+func (c *Config) getCurrentCluster() Cluster {
+	return c.getCluster(c.getCurrentContext().Cluster)
 }
 
 func (c *Config) getCluster(name string) Cluster {

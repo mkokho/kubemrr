@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"net/url"
 	"reflect"
@@ -10,7 +11,7 @@ import (
 	"time"
 )
 
-func TestRunWatchInvalidArgs(t *testing.T) {
+func TestRunWatchInvalidURLArgs(t *testing.T) {
 	f := NewTestFactory()
 	cmd := NewWatchCommand(f)
 	cmd.Flags().Set("port", "0")
@@ -29,11 +30,9 @@ func TestRunWatchInvalidArgs(t *testing.T) {
 		},
 	}
 
-	for i, test := range tests {
+	for _, test := range tests {
 		err := cmd.RunE(cmd, test.args)
-		if err == nil {
-			t.Errorf("Test %d: expected error, but received nothing", i)
-		}
+		assert.Error(t, err, "args: %v", test.args)
 	}
 }
 

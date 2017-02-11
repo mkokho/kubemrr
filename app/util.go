@@ -45,7 +45,7 @@ func GetBind(cmd *cobra.Command) (string, error) {
 }
 
 type Factory interface {
-	KubeClient(baseUrl *url.URL) KubeClient
+	KubeClient(config *Config) KubeClient
 	MrrClient(bind string) (MrrClient, error)
 	MrrCache() *MrrCache
 	Serve(l net.Listener, c *MrrCache) error
@@ -81,8 +81,8 @@ func (f *DefaultFactory) MrrCache() *MrrCache {
 	return NewMrrCache()
 }
 
-func (f *DefaultFactory) KubeClient(url *url.URL) KubeClient {
-	return NewKubeClient(url)
+func (f *DefaultFactory) KubeClient(config *Config) KubeClient {
+	return NewKubeClient(config)
 }
 
 func (f *DefaultFactory) Serve(l net.Listener, cache *MrrCache) error {
@@ -157,7 +157,8 @@ func (f *TestFactory) HomeKubeconfig() (Config, error) {
 	return f.kubeconfig, nil
 }
 
-func (f *TestFactory) KubeClient(url *url.URL) KubeClient {
+func (f *TestFactory) KubeClient(config *Config) KubeClient {
+	url, _ := url.Parse(config.getCurrentCluster().Server)
 	kc, ok := f.kubeClients[url.String()]
 	if !ok {
 		kc = NewTestKubeClient()

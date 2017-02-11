@@ -6,7 +6,6 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"net"
-	"net/url"
 	"strings"
 	"time"
 )
@@ -75,12 +74,12 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) error {
 	c := f.MrrCache()
 
 	for i := range args {
-		url, err := url.Parse(args[i])
-		if err != nil || url.Scheme == "" {
-			return fmt.Errorf("could not parse [%s] as URL: %v", args[i], err)
+		config, err := NewConfigFromURL(args[i])
+		if err != nil {
+			return fmt.Errorf("could not watch %s: %s", args[i], err)
 		}
 
-		kc := f.KubeClient(url)
+		kc := f.KubeClient(config)
 		log.WithField("server", kc.Server().URL).Info("created client")
 
 		for _, k := range []string{"pod"} {
