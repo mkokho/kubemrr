@@ -49,7 +49,7 @@ EXAMPLE:
 
 func RunWatch(f Factory, cmd *cobra.Command, args []string) error {
 	if len(args) < 1 {
-		return errors.New("no URL given")
+		return errors.New("at least one argument is required, either url or context name")
 	}
 
 	bind, err := GetBind(cmd)
