@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"os/user"
+	"path"
 )
 
 func AddCommonFlags(cmd *cobra.Command) {
@@ -120,7 +121,11 @@ func (f *DefaultFactory) HomeKubeconfig() (Config, error) {
 
 func parseKubeConfig(filename string) (Config, error) {
 	res := Config{}
-	raw, err := ioutil.ReadFile(filename)
+	fnResolved, err := substituteUserHome(filename)
+	if err != nil {
+		return res, fmt.Errorf("could not substitute ~ in file %s: %s", filename, err)
+	}
+	raw, err := ioutil.ReadFile(fnResolved)
 	if err != nil {
 		return res, fmt.Errorf("could not read file %s: %s", filename, err)
 	}
@@ -181,4 +186,31 @@ func (f *TestFactory) KubeClient(config *Config) KubeClient {
 		f.kubeClients[url.String()] = kc
 	}
 	return kc
+}
+
+//Copyright 2014 The Kubernetes Authors.
+func recursiveSplit(dir string) []string {
+	parent, file := path.Split(dir)
+	if len(parent) == 0 {
+		return []string{file}
+	}
+	return append(recursiveSplit(parent[:len(parent)-1]), file)
+}
+
+//Copyright 2014 The Kubernetes Authors.
+func substituteUserHome(dir string) (string, error) {
+	if len(dir) == 0 || dir[0] != '~' {
+		return dir, nil
+	}
+	parts := recursiveSplit(dir)
+	if len(parts[0]) == 1 {
+		parts[0] = os.Getenv("HOME")
+	} else {
+		usr, err := user.Lookup(parts[0][1:])
+		if err != nil {
+			return "", err
+		}
+		parts[0] = usr.HomeDir
+	}
+	return path.Join(parts...), nil
 }

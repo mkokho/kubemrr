@@ -2,6 +2,9 @@ package app
 
 import (
 	"github.com/stretchr/testify/assert"
+	"os"
+	"os/user"
+	"path"
 	"strings"
 	"testing"
 )
@@ -92,4 +95,32 @@ func TestConfigMakeTLSConfig(t *testing.T) {
 		assert.Equal(t, 1, len(tls.RootCAs.Subjects()), "must have parsed Certificate Authority")
 	}
 	assert.Equal(t, true, tls.InsecureSkipVerify)
+}
+
+//Copyright 2014 The Kubernetes Authors.
+func TestSubstituteUserHome(t *testing.T) {
+	usr, err := user.Current()
+	if err != nil {
+		t.Logf("SKIPPING TEST: unexpected error: %v", err)
+		return
+	}
+	tests := []struct {
+		input     string
+		expected  string
+		expectErr bool
+	}{
+		{input: "~/foo", expected: path.Join(os.Getenv("HOME"), "foo")},
+		{input: "~" + usr.Username + "/bar", expected: usr.HomeDir + "/bar"},
+		{input: "/foo/bar", expected: "/foo/bar"},
+		{input: "~doesntexit/bar", expectErr: true},
+	}
+	for _, test := range tests {
+		output, err := substituteUserHome(test.input)
+		if test.expectErr {
+			assert.Error(t, err)
+			continue
+		}
+		assert.NoError(t, err)
+		assert.Equal(t, test.expected, output)
+	}
 }
