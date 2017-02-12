@@ -20,10 +20,10 @@ instead of real Kubernetes API server in the example below.
 
 # Example
 
-To start watching a server:
+To start watching servers, give context names from your kubeconfig file:
 ```
-kubemrr watch https://kube-us.example.org
-``` 
+kubemrr watch dev prod
+```
 
 To make completion script that talks to `kubemrr` shell:
 ```

@@ -13,13 +13,14 @@ import (
 
 func NewWatchCommand(f Factory) *cobra.Command {
 	var watchCmd = &cobra.Command{
-		Use:   "watch [flags] [url]",
+		Use:   "watch [flags] [context]...",
 		Short: "Start a mirror of Kubernetes API servers",
 		Long: `
 DESCRIPTION:
   Start a mirror of Kubernetes API servers.
 
   It maintans several connections to each of the given API servers.
+  Connection configuration is taken from the --kubeconfig file, where contexts are defined.
   On each connection it will listen for changes happened in the Kubernetes cluster.
   The names of the alive resources are available by "get" command.
 
@@ -29,7 +30,7 @@ DESCRIPTION:
   See help for "get" command to know how to filter.
 
 EXAMPLE:
-  kubemrr -a 0.0.0.0 -p 33033 watch https://kube-api-1.com https://kube-api-2.com
+  kubemrr -a 0.0.0.0 -p 33033 watch dev prod
   kubemrr -a 0.0.0.0 -p 33033 get pod
 
 `,
