@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
+	"github.com/asaskevich/govalidator"
 	"github.com/spf13/cobra"
 	"net"
-	"net/url"
 	"strings"
 	"time"
 )
@@ -49,7 +49,7 @@ EXAMPLE:
 
 func RunWatch(f Factory, cmd *cobra.Command, args []string) error {
 	if len(args) < 1 {
-		return errors.New("no URL given")
+		return errors.New("at least one argument is required, either url or context name")
 	}
 
 	bind, err := GetBind(cmd)
@@ -74,13 +74,26 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) error {
 
 	c := f.MrrCache()
 
-	for i := range args {
-		url, err := url.Parse(args[i])
-		if err != nil || url.Scheme == "" {
-			return fmt.Errorf("could not parse [%s] as URL: %v", args[i], err)
+	for _, arg := range args {
+		var config *Config
+		if govalidator.IsURL(arg) {
+			config, err = NewConfigFromURL(arg)
+			if err != nil {
+				return fmt.Errorf("url %s is not valid: %s", arg, err)
+			}
+		} else {
+			config, err = GetKubeconfig(cmd)
+			if err != nil {
+				return fmt.Errorf("cannot parse kubeconfig file %s: %s", arg, err)
+			}
+			context := config.getContext(arg)
+			if context == nil {
+				return fmt.Errorf("cannot find context %s in kubeconfig", arg)
+			}
+			config.CurrentContext = arg
 		}
 
-		kc := f.KubeClient(url)
+		kc := f.KubeClient(config)
 		log.WithField("server", kc.Server().URL).Info("created client")
 
 		for _, k := range []string{"pod"} {

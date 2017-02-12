@@ -10,6 +10,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/asaskevich/govalidator",
+			"repository": "https://github.com/asaskevich/govalidator",
+			"vcs": "git",
+			"revision": "fdf19785fd3558d619ef81212f5edf1d6c2a5911",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/coreos/go-etcd/etcd",
 			"repository": "https://github.com/coreos/go-etcd",
 			"vcs": "git",
@@ -170,6 +178,14 @@
 			"repository": "https://github.com/spf13/viper",
 			"vcs": "git",
 			"revision": "80ab6657f9ec7e5761f6603320d3d58dfe6970f6",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/stretchr/testify",
+			"repository": "https://github.com/stretchr/testify",
+			"vcs": "git",
+			"revision": "4d4bfba8f1d1027c4fdbe371823030df51419987",
 			"branch": "master",
 			"notests": true
 		},

@@ -104,13 +104,13 @@ func TestRunGetWithKubectlFlags(t *testing.T) {
 	f.kubeconfig = Config{
 		CurrentContext: "c1",
 		Contexts: []ContextWrap{
-			{"c1", Context{"cluster_1", "ns1"}},
-			{"c-2", Context{"cluster_2", "ns2"}},
+			{"c1", Context{Cluster: "cluster_1", Namespace: "ns1"}},
+			{"c-2", Context{Cluster: "cluster_2", Namespace: "ns2"}},
 		},
 		Clusters: []ClusterWrap{
-			{"cluster_1", Cluster{"x1.com"}},
-			{"cluster_2", Cluster{"x2.com"}},
-			{"cluster_3", Cluster{"x3.com"}},
+			{"cluster_1", Cluster{Server: "x1.com"}},
+			{"cluster_2", Cluster{Server: "x2.com"}},
+			{"cluster_3", Cluster{Server: "x3.com"}},
 		},
 	}
 	cmd := NewGetCommand(f)
@@ -217,25 +217,5 @@ func TestRunGetClientError(t *testing.T) {
 		if !strings.Contains(err.Error(), tc.err.Error()) {
 			t.Errorf("Running [get %v]: error output [%v] was not equal to expected [%v]", test, err, tc.err)
 		}
-	}
-}
-
-func TestConfigMakeFilter(t *testing.T) {
-	conf := Config{
-		CurrentContext: "prod",
-		Contexts: []ContextWrap{
-			{"dev", Context{"cluster_2", "red"}},
-			{"prod", Context{"cluster_1", "blue"}},
-		},
-		Clusters: []ClusterWrap{
-			{"cluster_1", Cluster{"https://foo.com:8443"}},
-			{"cluster_2", Cluster{"https://bar.com"}},
-		},
-	}
-
-	expected := MrrFilter{Server: "https://foo.com:8443", Namespace: "blue"}
-	actual := conf.makeFilter()
-	if !reflect.DeepEqual(expected, actual) {
-		t.Errorf("Expected %+v, got %+v", expected, actual)
 	}
 }

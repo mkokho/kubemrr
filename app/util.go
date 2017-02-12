@@ -12,10 +12,12 @@ import (
 	"net/url"
 	"os"
 	"os/user"
+	"path"
 )
 
 func AddCommonFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("address", "a", "127.0.0.1", "The IP address where mirror is accessible")
+	cmd.Flags().String("kubeconfig", "~/.kube/config", "Path to the kubeconfig file")
 	cmd.Flags().IntP("port", "p", 33033, "The port on which mirror is accessible")
 	cmd.Flags().BoolP("verbose", "v", false, "Enables verbose output")
 }
@@ -44,8 +46,22 @@ func GetBind(cmd *cobra.Command) (string, error) {
 	return fmt.Sprintf("%s:%d", address, port), nil
 }
 
+func GetKubeconfig(cmd *cobra.Command) (*Config, error) {
+	file, err := cmd.Flags().GetString("kubeconfig")
+	if err != nil {
+		return nil, err
+	}
+
+	config, err := parseKubeConfig(file)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse kubeconfig file %s: %s", file, err)
+	}
+
+	return &config, nil
+}
+
 type Factory interface {
-	KubeClient(baseUrl *url.URL) KubeClient
+	KubeClient(config *Config) KubeClient
 	MrrClient(bind string) (MrrClient, error)
 	MrrCache() *MrrCache
 	Serve(l net.Listener, c *MrrCache) error
@@ -81,8 +97,8 @@ func (f *DefaultFactory) MrrCache() *MrrCache {
 	return NewMrrCache()
 }
 
-func (f *DefaultFactory) KubeClient(url *url.URL) KubeClient {
-	return NewKubeClient(url)
+func (f *DefaultFactory) KubeClient(config *Config) KubeClient {
+	return NewKubeClient(config)
 }
 
 func (f *DefaultFactory) Serve(l net.Listener, cache *MrrCache) error {
@@ -105,7 +121,11 @@ func (f *DefaultFactory) HomeKubeconfig() (Config, error) {
 
 func parseKubeConfig(filename string) (Config, error) {
 	res := Config{}
-	raw, err := ioutil.ReadFile(filename)
+	fnResolved, err := substituteUserHome(filename)
+	if err != nil {
+		return res, fmt.Errorf("could not substitute ~ in file %s: %s", filename, err)
+	}
+	raw, err := ioutil.ReadFile(fnResolved)
 	if err != nil {
 		return res, fmt.Errorf("could not read file %s: %s", filename, err)
 	}
@@ -157,7 +177,8 @@ func (f *TestFactory) HomeKubeconfig() (Config, error) {
 	return f.kubeconfig, nil
 }
 
-func (f *TestFactory) KubeClient(url *url.URL) KubeClient {
+func (f *TestFactory) KubeClient(config *Config) KubeClient {
+	url, _ := url.Parse(config.getCurrentCluster().Server)
 	kc, ok := f.kubeClients[url.String()]
 	if !ok {
 		kc = NewTestKubeClient()
@@ -165,4 +186,31 @@ func (f *TestFactory) KubeClient(url *url.URL) KubeClient {
 		f.kubeClients[url.String()] = kc
 	}
 	return kc
+}
+
+//Copyright 2014 The Kubernetes Authors.
+func recursiveSplit(dir string) []string {
+	parent, file := path.Split(dir)
+	if len(parent) == 0 {
+		return []string{file}
+	}
+	return append(recursiveSplit(parent[:len(parent)-1]), file)
+}
+
+//Copyright 2014 The Kubernetes Authors.
+func substituteUserHome(dir string) (string, error) {
+	if len(dir) == 0 || dir[0] != '~' {
+		return dir, nil
+	}
+	parts := recursiveSplit(dir)
+	if len(parts[0]) == 1 {
+		parts[0] = os.Getenv("HOME")
+	} else {
+		usr, err := user.Lookup(parts[0][1:])
+		if err != nil {
+			return "", err
+		}
+		parts[0] = usr.HomeDir
+	}
+	return path.Join(parts...), nil
 }

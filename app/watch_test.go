@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"net/url"
 	"reflect"
@@ -10,10 +11,11 @@ import (
 	"time"
 )
 
-func TestRunWatchInvalidArgs(t *testing.T) {
+func TestRunWatchInvalidURLArgs(t *testing.T) {
 	f := NewTestFactory()
 	cmd := NewWatchCommand(f)
 	cmd.Flags().Set("port", "0")
+	cmd.Flags().Set("kubeconfig", "test_data/kubeconfig_valid")
 
 	tests := []struct {
 		args []string
@@ -22,18 +24,19 @@ func TestRunWatchInvalidArgs(t *testing.T) {
 			args: []string{},
 		},
 		{
-			args: []string{"not-a-url"},
+			args: []string{"dev", "not-context"},
 		},
 		{
-			args: []string{"http://k8s-server_1.com", "not-a-url"},
+			args: []string{"not-context", "dev"},
+		},
+		{
+			args: []string{"http://k8s.server1.com", "not-a-url"},
 		},
 	}
 
-	for i, test := range tests {
+	for _, test := range tests {
 		err := cmd.RunE(cmd, test.args)
-		if err == nil {
-			t.Errorf("Test %d: expected error, but received nothing", i)
-		}
+		assert.Error(t, err, "args: %v", test.args)
 	}
 }
 
@@ -43,8 +46,8 @@ func TestRunWatch(t *testing.T) {
 	f.mrrCache = c
 
 	servers := []string{
-		"http://k8s-server_1.com",
-		"http://k8s-server_2.com",
+		"http://k8s.server1.com",
+		"http://k8s.server2.com",
 	}
 
 	for _, s := range servers {
@@ -57,7 +60,7 @@ func TestRunWatch(t *testing.T) {
 	cmd.Flags().Set("port", "0")
 	cmd.Flags().Set("interval", "3ms")
 	go cmd.RunE(cmd, servers)
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(50 * time.Millisecond)
 
 	for s, kc := range f.kubeClients {
 		for _, kind := range []string{"pod"} {
@@ -73,6 +76,26 @@ func TestRunWatch(t *testing.T) {
 	}
 }
 
+func TestRunWatchContextMode(t *testing.T) {
+	f := NewTestFactory()
+	cmd := NewWatchCommand(f)
+	cmd.Flags().Set("port", "0")
+	cmd.Flags().Set("mode", "context")
+	cmd.Flags().Set("kubeconfig", "test_data/kubeconfig_valid")
+
+	go cmd.RunE(cmd, []string{"prod", "dev"})
+	time.Sleep(50 * time.Millisecond)
+
+	//copied from kubeconfig_valid file
+	expectedURLs := []string{"https://foo.com", "https://bar.com"}
+	actualURLs := []string{}
+	for _, kc := range f.kubeClients {
+		actualURLs = append(actualURLs, kc.baseURL.String())
+	}
+
+	assert.Equal(t, expectedURLs, actualURLs)
+}
+
 func TestRunWatchWithOnlyFlag(t *testing.T) {
 	f := NewTestFactory()
 	cmd := NewWatchCommand(f)
@@ -80,7 +103,7 @@ func TestRunWatchWithOnlyFlag(t *testing.T) {
 	cmd.Flags().Set("interval", "3ms")
 	cmd.Flags().Set("only", "pod,namespace")
 	go cmd.RunE(cmd, []string{"http://z.org"})
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(50 * time.Millisecond)
 
 	for _, kc := range f.kubeClients {
 		for kind, hits := range kc.watchObjectHits {
@@ -109,15 +132,14 @@ func TestLoopWatchObjectsFailure(t *testing.T) {
 	kc := NewTestKubeClient()
 	kc.watchObjectError = errors.New("Test Error")
 	kc.objectEventsF = func() []*ObjectEvent {
-		randomName := fmt.Sprintf("r-%d", rand.Intn(9999))
 		return []*ObjectEvent{
-			&ObjectEvent{Added, &KubeObject{ObjectMeta: ObjectMeta{Name: randomName}, TypeMeta: TypeMeta{kind}}},
+			&ObjectEvent{Added, &KubeObject{ObjectMeta: ObjectMeta{Name: "object"}, TypeMeta: TypeMeta{kind}}},
 		}
 	}
 
 	loopWatchObjects(c, kc, kind)
 
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(50 * time.Millisecond)
 	if kc.watchObjectHits[kind] < 2 {
 		t.Errorf("Not enough WatchObjects calls")
 	}
@@ -143,7 +165,7 @@ func TestLoopWatchObjects(t *testing.T) {
 	}
 
 	loopWatchObjects(c, kc, "does not matter")
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(50 * time.Millisecond)
 
 	//order matters in slice
 	expected := []KubeObject{*kc.objectEvents[4].Object, *kc.objectEvents[3].Object, *kc.objectEvents[7].Object}
@@ -173,7 +195,7 @@ func TestLoopGetObjects(t *testing.T) {
 	}
 
 	loopGetObjects(c, kc, kind, 3*time.Millisecond)
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(50 * time.Millisecond)
 
 	actual := c.objects[kc.Server()]
 	expected := finalObjects

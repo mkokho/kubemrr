@@ -40,12 +40,21 @@ type DefaultKubeClient struct {
 	baseURL *url.URL
 }
 
-func NewKubeClient(url *url.URL) KubeClient {
-	c := &DefaultKubeClient{
-		client:  http.DefaultClient,
+//NewKubeClient returns a client that talks to Kubenetes API server.
+//It talks to only one server, and uses configuration of the current context in the
+//given config
+func NewKubeClient(config *Config) KubeClient {
+	tlsConfig, _ := config.GenerateTLSConfig()
+	tr := &http.Transport{
+		TLSClientConfig: tlsConfig,
+	}
+	httpClient := &http.Client{Transport: tr}
+
+	url, _ := url.Parse(config.getCurrentCluster().Server)
+	return &DefaultKubeClient{
+		client:  httpClient,
 		baseURL: url,
 	}
-	return c
 }
 
 func (kc *DefaultKubeClient) Server() KubeServer {
