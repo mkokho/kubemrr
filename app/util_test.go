@@ -48,8 +48,8 @@ func TestParseKubeConfig(t *testing.T) {
 			{"prod", Context{"cluster_1", "blue", "user_1"}},
 		},
 		Clusters: []ClusterWrap{
-			{"cluster_1", Cluster{"https://foo.com", "ca1"}},
-			{"cluster_2", Cluster{"https://bar.com", "ca2"}},
+			{"cluster_1", Cluster{Server: "https://foo.com", CertificateAuthority: "ca1"}},
+			{"cluster_2", Cluster{Server: "https://bar.com", CertificateAuthority: "ca2", SkipVerify: true}},
 		},
 		Users: []UserWrap{
 			{"user_1", User{"cert1", "key1"}},
@@ -82,7 +82,7 @@ func TestConfigMakeTLSConfig(t *testing.T) {
 	cfg := Config{
 		CurrentContext: "x",
 		Contexts:       []ContextWrap{{"x", Context{Cluster: "cluster", User: "user"}}},
-		Clusters:       []ClusterWrap{{"cluster", Cluster{CertificateAuthority: "test_data/ca.pem"}}},
+		Clusters:       []ClusterWrap{{"cluster", Cluster{CertificateAuthority: "test_data/ca.pem", SkipVerify: true}}},
 		Users:          []UserWrap{{"user", User{"test_data/cert.pem", "test_data/key.pem"}}},
 	}
 
@@ -91,5 +91,5 @@ func TestConfigMakeTLSConfig(t *testing.T) {
 	if assert.NoError(t, err) {
 		assert.Equal(t, 1, len(tls.RootCAs.Subjects()), "must have parsed Certificate Authority")
 	}
-	assert.Equal(t, true, tls.InsecureSkipVerify, "for now, it is alway skip verify")
+	assert.Equal(t, true, tls.InsecureSkipVerify)
 }

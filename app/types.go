@@ -53,6 +53,7 @@ type Config struct {
 
 type Cluster struct {
 	Server               string `yaml:"server"`
+	SkipVerify           bool   `yaml:"insecure-skip-tls-verify"`
 	CertificateAuthority string `yaml:"certificate-authority"`
 }
 
@@ -151,10 +152,13 @@ func (c *Config) getUser(name string) User {
 }
 
 func (cfg *Config) GenerateTLSConfig() (*tls.Config, error) {
-	tlsConfig := &tls.Config{InsecureSkipVerify: true}
 	context := cfg.getCurrentContext()
 	c := cfg.getCluster(context.Cluster)
 	u := cfg.getUser(context.User)
+
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: c.SkipVerify,
+	}
 
 	if len(c.CertificateAuthority) > 0 {
 		caCertPool := x509.NewCertPool()
