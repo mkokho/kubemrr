@@ -73,9 +73,10 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) error {
 		return errors.New("could not parse value of --only")
 	}
 
+	clients := make([]KubeClient, len(args))
 	c := f.MrrCache()
 
-	for _, arg := range args {
+	for i, arg := range args {
 		var config *Config
 		if govalidator.IsURL(arg) {
 			config, err = NewConfigFromURL(arg)
@@ -96,7 +97,16 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) error {
 
 		kc := f.KubeClient(config)
 		log.WithField("server", kc.Server().URL).Info("created client")
+		clients[i] = kc
+	}
 
+	for _, kc := range clients {
+		if err := kc.Ping(); err != nil {
+			return fmt.Errorf("failed to ping server: %s", err)
+		}
+	}
+
+	for _, kc := range clients {
 		for _, k := range []string{"pod"} {
 			if isWatching(k, enabledResources) {
 				loopWatchObjects(c, kc, k)

@@ -76,11 +76,22 @@ func TestRunWatch(t *testing.T) {
 	}
 }
 
+func TestRunWatchFailedPing(t *testing.T) {
+	kc := NewTestKubeClient()
+	f := NewTestFactory()
+	f.kubeClients[kc.Server().URL] = kc
+
+	cmd := NewWatchCommand(f)
+	cmd.Flags().Set("port", "0")
+	cmd.RunE(cmd, []string{kc.Server().URL})
+
+	assert.Equal(t, kc.pings, 1, "must have pinged server")
+}
+
 func TestRunWatchContextMode(t *testing.T) {
 	f := NewTestFactory()
 	cmd := NewWatchCommand(f)
 	cmd.Flags().Set("port", "0")
-	cmd.Flags().Set("mode", "context")
 	cmd.Flags().Set("kubeconfig", "test_data/kubeconfig_valid")
 
 	go cmd.RunE(cmd, []string{"prod", "dev"})

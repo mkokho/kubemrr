@@ -31,6 +31,7 @@ type ObjectList struct {
 
 type KubeClient interface {
 	Server() KubeServer
+	Ping() error
 	WatchObjects(kind string, out chan *ObjectEvent) error
 	GetObjects(kind string) ([]KubeObject, error)
 }
@@ -59,6 +60,14 @@ func NewKubeClient(config *Config) KubeClient {
 
 func (kc *DefaultKubeClient) Server() KubeServer {
 	return KubeServer{kc.baseURL.String()}
+}
+
+func (kc *DefaultKubeClient) Ping() error {
+	req, err := kc.newRequest("GET", "/", nil)
+	if err != nil {
+		return err
+	}
+	return kc.do(req, nil)
 }
 
 func (kc *DefaultKubeClient) WatchObjects(kind string, out chan *ObjectEvent) error {
@@ -183,6 +192,14 @@ func (c *DefaultKubeClient) do(req *http.Request, v interface{}) error {
 		resp.Body.Close()
 	}()
 
+	if resp.StatusCode >= 300 {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			body = []byte(err.Error())
+		}
+		return fmt.Errorf("unexpected status for %s %s: %s %s", req.Method, req.URL, resp.Status, string(body))
+	}
+
 	if v != nil {
 		err = json.NewDecoder(resp.Body).Decode(v)
 		if err == io.EOF {
@@ -195,6 +212,7 @@ func (c *DefaultKubeClient) do(req *http.Request, v interface{}) error {
 
 type TestKubeClient struct {
 	baseURL *url.URL
+	pings   int
 
 	objectEvents  []*ObjectEvent
 	objectEventsF func() []*ObjectEvent
@@ -210,7 +228,7 @@ type TestKubeClient struct {
 
 func NewTestKubeClient() *TestKubeClient {
 	kc := &TestKubeClient{}
-	kc.baseURL, _ = url.Parse(fmt.Sprintf("random-url-%d", rand.Intn(999)))
+	kc.baseURL, _ = url.Parse(fmt.Sprintf("http://random-url-%d.com", rand.Intn(999)))
 	kc.watchObjectLock = &sync.RWMutex{}
 	kc.watchObjectHits = map[string]int{}
 	kc.objectEventsF = func() []*ObjectEvent { return []*ObjectEvent{} }
@@ -222,6 +240,11 @@ func NewTestKubeClient() *TestKubeClient {
 
 func (kc *TestKubeClient) Server() KubeServer {
 	return KubeServer{kc.baseURL.String()}
+}
+
+func (kc *TestKubeClient) Ping() error {
+	kc.pings += 1
+	return nil
 }
 
 func (kc *TestKubeClient) WatchObjects(kind string, out chan *ObjectEvent) error {

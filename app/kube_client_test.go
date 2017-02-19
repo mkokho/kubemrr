@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -274,4 +275,30 @@ func TestGetServices(t *testing.T) {
 	if !reflect.DeepEqual(res, expected) {
 		t.Errorf("Expected %+v, got %+v", expected, res)
 	}
+}
+
+func TestPing(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `OK`)
+	},
+	)
+
+	err := client.Ping()
+	assert.NoError(t, err)
+}
+
+func TestPingError(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "Test error", 400)
+	},
+	)
+
+	err := client.Ping()
+	assert.Error(t, err)
 }
