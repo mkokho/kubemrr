@@ -64,11 +64,16 @@ func k8sNamespaces(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, ` { "items": [ { "metadata": { "name": "namespace1" } } ] }`)
 }
 
+func ok(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(w, `OK`)
+}
+
 func startKubernetesServer() {
 	mux = http.NewServeMux()
 	k8sServer = httptest.NewServer(mux)
 	k8sAddress = k8sServer.URL
 
+	mux.HandleFunc("/", ok)
 	mux.HandleFunc("/api/v1/pods", k8sPods)
 	mux.HandleFunc("/api/v1/services", k8sServices)
 	mux.HandleFunc("/api/v1/configmaps", k8sConfigmaps)

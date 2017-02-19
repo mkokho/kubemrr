@@ -100,6 +100,12 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) error {
 	}
 
 	for _, kc := range clients {
+		if err := kc.Ping(); err != nil {
+			return fmt.Errorf("failed to ping server: %s", err)
+		}
+	}
+
+	for _, kc := range clients {
 		for _, k := range []string{"pod"} {
 			if isWatching(k, enabledResources) {
 				loopWatchObjects(c, kc, k)

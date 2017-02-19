@@ -212,6 +212,7 @@ func (c *DefaultKubeClient) do(req *http.Request, v interface{}) error {
 
 type TestKubeClient struct {
 	baseURL *url.URL
+	pings   int
 
 	objectEvents  []*ObjectEvent
 	objectEventsF func() []*ObjectEvent
@@ -227,7 +228,7 @@ type TestKubeClient struct {
 
 func NewTestKubeClient() *TestKubeClient {
 	kc := &TestKubeClient{}
-	kc.baseURL, _ = url.Parse(fmt.Sprintf("random-url-%d", rand.Intn(999)))
+	kc.baseURL, _ = url.Parse(fmt.Sprintf("http://random-url-%d.com", rand.Intn(999)))
 	kc.watchObjectLock = &sync.RWMutex{}
 	kc.watchObjectHits = map[string]int{}
 	kc.objectEventsF = func() []*ObjectEvent { return []*ObjectEvent{} }
@@ -242,6 +243,7 @@ func (kc *TestKubeClient) Server() KubeServer {
 }
 
 func (kc *TestKubeClient) Ping() error {
+	kc.pings += 1
 	return nil
 }
 
