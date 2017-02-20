@@ -1,8 +1,10 @@
-# kubemrr
-
+# kubemrr 
 `kubemrr` mirrors description of Kubernetes resources for blazingly fast auto-completion.
 
 Feel free to suggest improvements, I'm here to work on them 👍
+
+[![Build Status](https://travis-ci.org/mkokho/kubemrr.svg?branch=master)](https://travis-ci.org/mkokho/kubemrr)
+
 
 # Details
 
