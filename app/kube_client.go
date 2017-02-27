@@ -85,6 +85,8 @@ func (kc *DefaultKubeClient) WatchObjects(kind string, out chan *ObjectEvent) er
 
 func (kc *DefaultKubeClient) GetObjects(kind string) ([]KubeObject, error) {
 	switch kind {
+	case "node":
+		return kc.get("api/v1/nodes", kind)
 	case "configmap":
 		return kc.get("api/v1/configmaps", kind)
 	case "service":

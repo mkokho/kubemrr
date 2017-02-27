@@ -277,6 +277,36 @@ func TestGetServices(t *testing.T) {
 	}
 }
 
+func TestGetNodes(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc("/api/v1/nodes", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `
+			{
+				"items": [
+					{ "metadata": { "name": "x1" } },
+					{ "metadata": { "name": "x2" } }
+				]
+			}`)
+	},
+	)
+
+	res, err := client.GetObjects("node")
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	expected := []KubeObject{
+		{TypeMeta: TypeMeta{"node"}, ObjectMeta: ObjectMeta{Name: "x1"}},
+		{TypeMeta: TypeMeta{"node"}, ObjectMeta: ObjectMeta{Name: "x2"}},
+	}
+
+	if !reflect.DeepEqual(res, expected) {
+		t.Errorf("Expected %+v, got %+v", expected, res)
+	}
+}
+
 func TestPing(t *testing.T) {
 	setup()
 	defer teardown()
