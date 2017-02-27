@@ -163,6 +163,11 @@ func makeFilterFor(kind string, conf *Config, flags *KubectlFlags) MrrFilter {
 		}
 	}
 	f.Kind = kind
+
+	if kind == "node" {
+		f.Namespace = ""
+	}
+
 	return f
 }
 
