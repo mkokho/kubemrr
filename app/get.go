@@ -24,6 +24,7 @@ DESCRIPTION:
     - deployment, deployments
     - ns, namespace, namespaces
     - configmap, configmaps
+    - no, node, nodes
 
   To filter alive resources it uses current context from the ~/.kube/conf file.
   Additionally, it accepts --namespace, --context, --server and --cluster parameters
@@ -54,7 +55,7 @@ func RunGet(f Factory, cmd *cobra.Command, args []string) error {
 		return errors.New("only one argument is expected")
 	}
 
-	regex := "(po|pod|pods|svc|service|services|deployment|deployments|ns|namespace|namespaces|configmap|configmaps)"
+	regex := "(po|pod|pods|svc|service|services|deployment|deployments|ns|namespace|namespaces|configmap|configmaps|no|node|nodes)"
 	argMatcher, err := regexp.Compile(regex)
 	if err != nil {
 		return fmt.Errorf("unexpected error: %s", err)
@@ -91,8 +92,10 @@ func RunGet(f Factory, cmd *cobra.Command, args []string) error {
 		err = outputNames(client, makeFilterFor("service", &conf, kubectlFlags), f.StdOut())
 	} else if strings.HasPrefix(args[0], "c") {
 		err = outputNames(client, makeFilterFor("configmap", &conf, kubectlFlags), f.StdOut())
-	} else if strings.HasPrefix(args[0], "n") {
+	} else if strings.HasPrefix(args[0], "na") || args[0] == "ns" {
 		err = outputNames(client, makeFilterFor("namespace", &conf, kubectlFlags), f.StdOut())
+	} else if strings.HasPrefix(args[0], "no") {
+		err = outputNames(client, makeFilterFor("node", &conf, kubectlFlags), f.StdOut())
 	} else {
 		err = outputNames(client, makeFilterFor("deployment", &conf, kubectlFlags), f.StdOut())
 	}
@@ -161,6 +164,11 @@ func makeFilterFor(kind string, conf *Config, flags *KubectlFlags) MrrFilter {
 		}
 	}
 	f.Kind = kind
+
+	if kind == "node" {
+		f.Namespace = ""
+	}
+
 	return f
 }
 

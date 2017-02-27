@@ -24,13 +24,13 @@ DESCRIPTION:
   On each connection it will listen for changes happened in the Kubernetes cluster.
   The names of the alive resources are available by "get" command.
 
-  Mirrored resources: pods, services, deployments, configmaps, namespaces
+  Mirrored resources: pods, services, deployments, configmaps, namespaces, nodes.
 
   By default, "get pod" returns pods from all servers and all namespaces.
   See help for "get" command to know how to filter.
 
 EXAMPLE:
-  kubemrr -a 0.0.0.0 -p 33033 watch dev prod
+  kubemrr -a 0.0.0.0 -p 33033 watch dev-context prod-context
   kubemrr -a 0.0.0.0 -p 33033 get pod
 
 `,
@@ -113,7 +113,7 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) error {
 			}
 		}
 
-		for _, k := range []string{"service", "deployment", "configmap", "namespace"} {
+		for _, k := range []string{"service", "deployment", "configmap", "namespace", "node"} {
 			if isWatching(k, enabledResources) {
 				loopGetObjects(c, kc, k, interval)
 			}
