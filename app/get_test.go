@@ -78,6 +78,10 @@ func TestRunGet(t *testing.T) {
 			aliases:        []string{"ns", "namespace", "namespaces"},
 			expectedFilter: MrrFilter{Kind: "namespace"},
 		},
+		{
+			aliases:        []string{"no", "node", "nodes"},
+			expectedFilter: MrrFilter{Kind: "namespace"},
+		},
 	}
 
 	for _, test := range tests {

@@ -54,7 +54,7 @@ func RunGet(f Factory, cmd *cobra.Command, args []string) error {
 		return errors.New("only one argument is expected")
 	}
 
-	regex := "(po|pod|pods|svc|service|services|deployment|deployments|ns|namespace|namespaces|configmap|configmaps)"
+	regex := "(po|pod|pods|svc|service|services|deployment|deployments|ns|namespace|namespaces|configmap|configmaps|no|node|nodes)"
 	argMatcher, err := regexp.Compile(regex)
 	if err != nil {
 		return fmt.Errorf("unexpected error: %s", err)
