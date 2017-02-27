@@ -80,7 +80,7 @@ func TestRunGet(t *testing.T) {
 		},
 		{
 			aliases:        []string{"no", "node", "nodes"},
-			expectedFilter: MrrFilter{Kind: "namespace"},
+			expectedFilter: MrrFilter{Kind: "node"},
 		},
 	}
 

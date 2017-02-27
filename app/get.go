@@ -91,8 +91,10 @@ func RunGet(f Factory, cmd *cobra.Command, args []string) error {
 		err = outputNames(client, makeFilterFor("service", &conf, kubectlFlags), f.StdOut())
 	} else if strings.HasPrefix(args[0], "c") {
 		err = outputNames(client, makeFilterFor("configmap", &conf, kubectlFlags), f.StdOut())
-	} else if strings.HasPrefix(args[0], "n") {
+	} else if strings.HasPrefix(args[0], "na") || args[0] == "ns" {
 		err = outputNames(client, makeFilterFor("namespace", &conf, kubectlFlags), f.StdOut())
+	} else if strings.HasPrefix(args[0], "no") {
+		err = outputNames(client, makeFilterFor("node", &conf, kubectlFlags), f.StdOut())
 	} else {
 		err = outputNames(client, makeFilterFor("deployment", &conf, kubectlFlags), f.StdOut())
 	}
