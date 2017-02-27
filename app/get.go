@@ -24,6 +24,7 @@ DESCRIPTION:
     - deployment, deployments
     - ns, namespace, namespaces
     - configmap, configmaps
+    - no, node, nodes
 
   To filter alive resources it uses current context from the ~/.kube/conf file.
   Additionally, it accepts --namespace, --context, --server and --cluster parameters
