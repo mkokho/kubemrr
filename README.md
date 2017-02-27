@@ -44,6 +44,8 @@ kus get po [TAB][TAB]
 kus get svc [TAB][TAB]
 kus get deployments [TAB][TAB]
 kus get configmaps [TAB][TAB]
+kus get namespaces [TAB][TAB]
+kus get nodes [TAB][TAB]
 ```
 
 To make completion script that talks to `kubemrr` that is running on different host (use IP to save time on name resolution):
