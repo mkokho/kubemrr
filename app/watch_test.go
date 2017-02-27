@@ -68,7 +68,7 @@ func TestRunWatch(t *testing.T) {
 				t.Errorf("Unexpected number of WatchObject requests for [%s] server [%s]: %v", kind, s, kc.watchObjectHits)
 			}
 		}
-		for _, kind := range []string{"configmap", "namespace", "service", "deployment"} {
+		for _, kind := range []string{"configmap", "namespace", "service", "deployment", "node"} {
 			if kc.getObjectHits[kind] < 3 {
 				t.Errorf("Expected at least 3 GetObject requests for [%s] server [%s], hits were %v", kind, s, kc.getObjectHits)
 			}

@@ -112,7 +112,7 @@ func RunWatch(f Factory, cmd *cobra.Command, args []string) error {
 			}
 		}
 
-		for _, k := range []string{"service", "deployment", "configmap", "namespace"} {
+		for _, k := range []string{"service", "deployment", "configmap", "namespace", "node"} {
 			if isWatching(k, enabledResources) {
 				loopGetObjects(c, kc, k, interval)
 			}
