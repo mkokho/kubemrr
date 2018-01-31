@@ -3,6 +3,7 @@ package app
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 )
@@ -52,9 +53,10 @@ type Config struct {
 }
 
 type Cluster struct {
-	Server               string `yaml:"server"`
-	SkipVerify           bool   `yaml:"insecure-skip-tls-verify"`
-	CertificateAuthority string `yaml:"certificate-authority"`
+	Server                   string `yaml:"server"`
+	SkipVerify               bool   `yaml:"insecure-skip-tls-verify"`
+	CertificateAuthority     string `yaml:"certificate-authority"`
+	CertificateAuthorityData string `yaml:"certificate-authority-data"`
 }
 
 type ClusterWrap struct {
@@ -170,6 +172,21 @@ func (cfg *Config) GenerateTLSConfig() (*tls.Config, error) {
 		if !ok {
 			return nil, fmt.Errorf("unable to parse CA cert %s", c.CertificateAuthority)
 		}
+		tlsConfig.RootCAs = caCertPool
+	}
+
+	if len(c.CertificateAuthorityData) > 0 {
+		caCert, err := base64.StdEncoding.DecodeString(c.CertificateAuthorityData)
+		if err != nil {
+			return nil, fmt.Errorf("unable to base 64 decode CA data")
+		}
+
+		caCertPool := x509.NewCertPool()
+		ok := caCertPool.AppendCertsFromPEM(caCert)
+		if !ok {
+			return nil, fmt.Errorf("unable to parse CA data")
+		}
+
 		tlsConfig.RootCAs = caCertPool
 	}
 
