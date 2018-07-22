@@ -5,6 +5,9 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io/ioutil"
+	"os/user"
+
+	"github.com/rhysd/abspath"
 )
 
 type ObjectMeta struct {
@@ -160,9 +163,20 @@ func (cfg *Config) GenerateTLSConfig() (*tls.Config, error) {
 		InsecureSkipVerify: c.SkipVerify,
 	}
 
+	kubePath := func(path string) string {
+		usr, err := user.Current()
+		kubeDir := usr.HomeDir + "/.kube/"
+
+		absolutePath, err := abspath.New(path)
+		if err != nil {
+			absolutePath, _ = abspath.New(kubeDir + path)
+		}
+		return absolutePath.String()
+	}
+
 	if len(c.CertificateAuthority) > 0 {
 		caCertPool := x509.NewCertPool()
-		caCert, err := ioutil.ReadFile(c.CertificateAuthority)
+		caCert, err := ioutil.ReadFile(kubePath(c.CertificateAuthority))
 		if err != nil {
 			return nil, fmt.Errorf("unable to use specified CA cert %s: %s", c.CertificateAuthority, err)
 		}
@@ -178,7 +192,8 @@ func (cfg *Config) GenerateTLSConfig() (*tls.Config, error) {
 	} else if len(u.ClientKey) > 0 && len(u.ClientCertificate) == 0 {
 		return nil, fmt.Errorf("client key file %q specified without client cert file", u.ClientKey)
 	} else if len(u.ClientCertificate) > 0 && len(u.ClientKey) > 0 {
-		cert, err := tls.LoadX509KeyPair(u.ClientCertificate, u.ClientKey)
+
+		cert, err := tls.LoadX509KeyPair(kubePath(u.ClientCertificate), kubePath(u.ClientKey))
 		if err != nil {
 			return nil, fmt.Errorf("unable to use specified client cert (%s) & key (%s): %s", u.ClientCertificate, u.ClientKey, err)
 		}
